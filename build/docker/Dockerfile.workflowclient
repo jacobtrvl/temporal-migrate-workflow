@@ -1,0 +1,17 @@
+FROM nicolaka/netshoot
+
+WORKDIR /opt/emco
+
+# RUN addgroup -S emco && adduser -S -G emco emco
+# RUN chown emco:emco . -R
+
+COPY ./migrate_workflowclient .
+COPY ./http_server .
+
+EXPOSE 9090
+
+# USER emco
+USER root
+
+ENTRYPOINT ["./http_server"]
+

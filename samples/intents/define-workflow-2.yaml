@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2022 Intel Corporation
+
+#create the workflow intent
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/{{.CompositeApp}}/v1/deployment-intent-groups/{{.DeploymentIntent}}/temporal-workflow-intents
+metadata :
+  name: {{.DeploymentIntent}}-workflow-intent
+  description: "description for intent"
+spec:
+  workflowClient:
+     clientEndpointName: {{.WfClientName}}
+     clientEndpointPort: {{.WfClientPort}}
+  temporal:
+     workflowClientName: "migrate_workflowclient"
+     workflowStartOptions:
+       id: "migrate-apps-1"
+       taskQueue: "MIGRATION_TASK_Q"
+       retryPolicy: 
+          maximumAttempts: 7
+     workflowParams:
+       activityOptions:
+          all-activities:
+             startToCloseTimeout: 900
+             heartbeatTimeout: 500
+             retryPolicy:
+                initialInterval: 5
+       activityParams:
+          all-activities: 
+             emcoURL: "http://192.168.1.201:30415"
+             project: "proj1"
+             compositeApp: "capp1"
+             compositeAppVersion: "v1"
+             deploymentIntentGroup: "dig1"
+             targetClusterProvider: "provider1"
+             targetClusterName: "cluster1"

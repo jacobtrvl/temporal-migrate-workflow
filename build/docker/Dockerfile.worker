@@ -1,0 +1,16 @@
+FROM nicolaka/netshoot
+
+WORKDIR /opt/emco/migrate-workflow
+
+# RUN addgroup -S emco && adduser -S -G emco emco
+# RUN chown emco:emco . -R
+
+COPY ./worker .
+# COPY --chown=emco ./worker ./
+
+# USER emco
+USER root
+
+ENTRYPOINT ["env", "sh", "-c", "./worker & while true ;do wait ;done"]
+
+
