@@ -3,11 +3,14 @@
 
 package emcorelocate
 
-const MigTaskQueue = "MIGRATION_TASK_Q"
+const MigTaskQueue = "RELOCATE_TASK_Q"
 
-type AppNameIntentPair struct {
+type AppNameDetails struct {
 	AppName       string
 	AppIntentName string
+	//TODO: replace phase var to handle enum instead of plain string
+	Phase         string
+	PrimaryIntent IntentStruc
 }
 
 type MigParam struct {
@@ -15,5 +18,5 @@ type MigParam struct {
 	GenericPlacementIntentURL string
 	GenericPlacementIntents   []string
 	// map indexed by generic placement intent name
-	AppNameIntentPairs map[string][]AppNameIntentPair
+	AppsNameDetails map[string][]AppNameDetails
 }

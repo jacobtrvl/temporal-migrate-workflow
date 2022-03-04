@@ -17,13 +17,13 @@ var NeededParams = []string{ // parameters needed for this workflow
 	"emcoURL", "project", "compositeApp", "compositeAppVersion", "deploymentIntentGroup",
 	"targetClusterProvider", "targetClusterName"}
 
-// EmcoRelocateWorkflow is a Temporal workflow that relocates selected app/apps of a
+// EmcoRelocateWorkflow is a Temporal workflow that relocates selected app of a
 // given deployment intent group (DIG) to a given target cluster in zero down-time mode.
 // It means that new app instance will be in 'ready' STATE before old app instance will be deleted.
 // It expects an "all-activities" parameter inside wfParam.InParams that
 // specifies the common retry/timeput policies for all activities. It may
 // have other activity-specific options on top of that.
-func EmcoMigrateWorkflow(ctx wf.Context, wfParam *eta.WorkflowParams) (*MigParam, error) {
+func EmcoRelocateWorkflow(ctx wf.Context, wfParam *eta.WorkflowParams) (*MigParam, error) {
 	// List all activities for this workflow
 	activityNames := []string{
 		"GetDigAppIntents",
@@ -170,11 +170,13 @@ func getActivityContextMap(ctx wf.Context, activityNames []string,
 		ctxMap[actName] = wf.WithActivityOptions(ctx, defaultActivityOpts)
 		// Apply all-activities options if specified
 		if all_activities_flag {
+			fmt.Printf("Applying all-activities options for activity %s\n", actName)
 			ctxMap[actName] = wf.WithActivityOptions(ctx, optsMap[ALL_ACTIVITIES])
 		}
 		// Apply activity-specific options, if specified
 		for paramActName := range optsMap {
 			if paramActName == actName {
+				fmt.Printf("Applying activity-specifc options for %s\n", actName)
 				ctxMap[actName] = wf.WithActivityOptions(ctx, optsMap[actName])
 			}
 		}

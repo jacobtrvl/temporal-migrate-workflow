@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 // TODO REVISIT Copied from EMCO as import leads to conflicts
@@ -89,7 +90,7 @@ func GetDigAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 	}
 	fmt.Printf("\nGetDigAppIntents: body = %#v\n", gpIntents)
 
-	migParam.AppNameIntentPairs = make(map[string][]AppNameIntentPair)
+	migParam.AppsNameDetails = make(map[string][]AppNameDetails)
 
 	for _, gpIntent := range gpIntents {
 		appIntentsUrl := buildAppIntentsURL(gpiUrl, gpIntent.MetaData.Name)
@@ -108,16 +109,19 @@ func GetDigAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 		}
 		fmt.Printf("\nGetDigAppIntents: body = %#v\n", appIntents)
 
-		// Build list of appName/appIbtentName pairs for this gpIntent
-		appIntentNames := make([]AppNameIntentPair, 0, len(appIntents))
+		// Build list of appName/appIntentName details for this gpIntent
+		appIntentNames := make([]AppNameDetails, 0, len(appIntents))
 		for _, appIntent := range appIntents {
-			pair := AppNameIntentPair{
+			details := AppNameDetails{
 				AppName:       appIntent.Spec.AppName,
 				AppIntentName: appIntent.MetaData.Name,
+				//TODO: replace with enum
+				Phase:         "1",
+				PrimaryIntent: appIntent.Spec.Intent,
 			}
-			appIntentNames = append(appIntentNames, pair)
+			appIntentNames = append(appIntentNames, details)
 		}
-		migParam.AppNameIntentPairs[gpIntent.MetaData.Name] = appIntentNames
+		migParam.AppsNameDetails[gpIntent.MetaData.Name] = appIntentNames
 	}
 
 	return &migParam, nil
@@ -125,7 +129,7 @@ func GetDigAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 
 func UpdateAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error) {
 
-	// Update the intents, walking through migParam.AppNameIntentPairs map
+	// Update the intents, walking through migParam.AppsNameDetails map
 	newAppSpecIntent := IntentStruc{ // all apps get this spec intent
 		AllOfArray: []AllOf{
 			{
@@ -135,15 +139,32 @@ func UpdateAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 		},
 	}
 
-	for gpIntentName, appNameIntentPairs := range migParam.AppNameIntentPairs {
-		appIntentBaseURL := buildAppIntentsURL(
-			migParam.GenericPlacementIntentURL, gpIntentName)
-		for _, appNameIntentPair := range appNameIntentPairs {
-			appIntentURL := appIntentBaseURL + "/" + appNameIntentPair.AppIntentName
+	for gpIntentName, appNameDetails := range migParam.AppsNameDetails {
+		appIntentBaseURL := buildAppIntentsURL(migParam.GenericPlacementIntentURL, gpIntentName)
+		for index, appNameDetails := range appNameDetails {
+			switch appNameDetails.Phase {
+			case "1":
+				for _, plcIntent := range appNameDetails.PrimaryIntent.AllOfArray {
+					newAppSpecIntent.AllOfArray = append(newAppSpecIntent.AllOfArray, plcIntent)
+				}
+				for _, plcIntent := range appNameDetails.PrimaryIntent.AnyOfArray {
+					newAppSpecIntent.AnyOfArray = append(newAppSpecIntent.AnyOfArray, plcIntent)
+				}
+				migParam.AppsNameDetails[gpIntentName][index].Phase = "2"
+			case "2":
+				// Skip primary placement intents
+				migParam.AppsNameDetails[gpIntentName][index].Phase = "1" // TODO: is it necessary?
+			default:
+				wferr := fmt.Errorf("error: %v is a bad phase", appNameDetails.Phase)
+				fmt.Fprintf(os.Stderr, wferr.Error())
+				return nil, wferr
+			}
+
+			appIntentURL := appIntentBaseURL + "/" + appNameDetails.AppIntentName
 			newAppIntent := AppIntent{
-				MetaData: MetaData{Name: appNameIntentPair.AppIntentName},
+				MetaData: MetaData{Name: appNameDetails.AppIntentName},
 				Spec: SpecData{
-					AppName: appNameIntentPair.AppName,
+					AppName: appNameDetails.AppName,
 					Intent:  newAppSpecIntent,
 				},
 			}
@@ -183,6 +204,7 @@ func UpdateAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 	return &migParam, nil
 }
 
+
 func DoDigUpdate(ctx context.Context, migParam MigParam) (*MigParam, error) {
 
 	// POST dig update operation
@@ -210,6 +232,7 @@ func DoDigUpdate(ctx context.Context, migParam MigParam) (*MigParam, error) {
 func CheckReadinessStatus(ctx context.Context, migParam MigParam) (*MigParam, error) {
 
 	//TODO:add body
+	time.Sleep(time.Second * 20)
 
 	return &migParam, nil
 }

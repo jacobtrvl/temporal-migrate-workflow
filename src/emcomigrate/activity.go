@@ -133,7 +133,7 @@ func GetDigAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 // The actual app migration happens only in the next activity, not here.
 func UpdateAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error) {
 
-	// Update the intents, walking through migParam.AppNameIntentPairs map
+	// Update the intents, walking through migParam.AppsNameDetails map
 	newAppSpecIntent := IntentStruc{ // all apps get this spec intent
 		AllOfArray: []AllOf{
 			{

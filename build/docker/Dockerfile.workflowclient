@@ -6,6 +6,7 @@ WORKDIR /opt/emco
 # RUN chown emco:emco . -R
 
 COPY ./migrate_workflowclient .
+COPY ./relocate_workflowclient .
 COPY ./http_server .
 
 EXPOSE 9090
