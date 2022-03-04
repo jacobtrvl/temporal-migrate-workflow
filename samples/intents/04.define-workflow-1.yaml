@@ -18,12 +18,12 @@ spec:
        id: "migrate-apps-1"
        taskQueue: "MIGRATION_TASK_Q"
        retryPolicy: 
-          maximumAttempts: 5
+          maximumAttempts: 2
      workflowParams:
        activityOptions:
           all-activities:
-             startToCloseTimeout: 1000
-             heartbeatTimeout: 500
+             startToCloseTimeout: 60000000000
+             heartbeatTimeout: 5000000
              retryPolicy:
                 initialInterval: 10
        activityParams:

@@ -15,17 +15,17 @@ spec:
   temporal:
      workflowClientName: "migrate_workflowclient"
      workflowStartOptions:
-       id: "migrate-apps-1"
+       id: "migrate-apps-2"
        taskQueue: "MIGRATION_TASK_Q"
        retryPolicy: 
-          maximumAttempts: 7
+          maximumAttempts: 2
      workflowParams:
        activityOptions:
           all-activities:
-             startToCloseTimeout: 900
-             heartbeatTimeout: 500
+             startToCloseTimeout: 60000000000
+             heartbeatTimeout: 5000000
              retryPolicy:
-                initialInterval: 5
+                initialInterval: 10
        activityParams:
           all-activities: 
              emcoURL: "http://192.168.1.201:30415"

@@ -52,7 +52,7 @@ type IntentStruc struct {
 	AnyOfArray []AnyOf `json:"anyOf,omitempty"`
 }
 
-// AllOf consists if ProviderName, ClusterName, ClusterLabelName and AnyOfArray. Any of   them can be empty
+// AllOf consists of ProviderName, ClusterName, ClusterLabelName and AnyOfArray. Any of   them can be empty
 type AllOf struct {
 	ProviderName     string  `json:"clusterProvider,omitempty"`
 	ClusterName      string  `json:"cluster,omitempty"`
@@ -67,6 +67,10 @@ type AnyOf struct {
 	ClusterLabelName string `json:"clusterLabel,omitempty"`
 }
 
+// GetDigAppIntents gets all the app intents for the given Deployment Intent Group.
+// A DIG has one or more Generic Placement Intents (GPI) and each GPI has one or
+// more app intents. An app intent specifies the cluster mapping for a
+// single app (helm chart).
 func GetDigAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error) {
 
 	fmt.Printf("GetDigAppIntents got params: %#v\n", migParam)
@@ -123,6 +127,10 @@ func GetDigAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 	return &migParam, nil
 }
 
+// UpdateAppIntents updates the app intents for a DIG to map all apps in that
+// DIG to a given target cluster. It builds the modified app intents locally
+// and then does a POST call to EMCO API to update the DIG's app intents.
+// The actual app migration happens only in the next activity, not here.
 func UpdateAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error) {
 
 	// Update the intents, walking through migParam.AppNameIntentPairs map
@@ -183,6 +191,7 @@ func UpdateAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 	return &migParam, nil
 }
 
+// DoDigUpdate calls EMCO's /update API to migrate the app.
 func DoDigUpdate(ctx context.Context, migParam MigParam) (*MigParam, error) {
 
 	// POST dig update operation
@@ -251,7 +260,6 @@ func getHttpRespBody(url string) ([]byte, error) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Printf("\nBody: %s\n", string(b)) // FIXME rm later
 
 	return b, nil
 }

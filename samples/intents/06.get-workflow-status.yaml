@@ -4,5 +4,5 @@
 #create the workflow intent
 version: emco/v2
 resourceContext:
-  anchor: projects/{{.ProjectName}}/composite-apps/{{.CompositeApp}}/v1/deployment-intent-groups/{{.DeploymentIntent}}/temporal-workflow-intents/{{.DeploymentIntent}}-workflow-intent/status?workflowID=migrate-apps-1&runDescribeWfExec=false&waitForResult=false&getWfHistory=false&temporalServer="192.168.0.33:7233"&queryType=current-state
+  anchor: projects/{{.ProjectName}}/composite-apps/{{.CompositeApp}}/v1/deployment-intent-groups/{{.DeploymentIntent}}/temporal-workflow-intents/{{.DeploymentIntent}}-workflow-intent/status?workflowID=migrate-apps-1&runDescribeWfExec=true&waitForResult=false&getWfHistory=false&temporalServer="192.168.0.33:7233"&queryType=current-state
 

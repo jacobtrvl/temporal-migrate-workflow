@@ -30,7 +30,7 @@ compile-workflowclient:
 		go build -o ../../bin/workflowclients/http_server http_server/main.go;
 
 clean-workflowclient:
-	/bin/rm -rf bin/workflowclient
+	/bin/rm -rf bin/workflowclients
 
 clean: clean-worker clean-workflowclient
 

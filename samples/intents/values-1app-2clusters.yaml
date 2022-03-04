@@ -13,8 +13,8 @@ AdminCloud: default
 
 CompositeApp: capp1
 App1: collectd
-HelmApp1: /root/go/emco-migrate-workflow/samples/apps/collectd.tar.gz
-ProfileApp1: /root/go/emco-migrate-workflow/samples/apps/collectd_profile.tar.gz
+HelmApp1: /root/go/temporal-migrate-workflow/samples/apps/collectd.tar.gz
+ProfileApp1: /root/go/temporal-migrate-workflow/samples/apps/collectd_profile.tar.gz
 
 DeploymentIntent: dig1
 

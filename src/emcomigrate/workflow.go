@@ -141,11 +141,13 @@ func getActivityContextMap(ctx wf.Context, activityNames []string,
 		ctxMap[actName] = wf.WithActivityOptions(ctx, defaultActivityOpts)
 		// Apply all-activities options if specified
 		if all_activities_flag {
+			fmt.Printf("Applying all-activities options for activity %s\n", actName)
 			ctxMap[actName] = wf.WithActivityOptions(ctx, optsMap[ALL_ACTIVITIES])
 		}
 		// Apply activity-specific options, if specified
 		for paramActName := range optsMap {
 			if paramActName == actName {
+				fmt.Printf("Applying activity-specifc options for %s\n", actName)
 				ctxMap[actName] = wf.WithActivityOptions(ctx, optsMap[actName])
 			}
 		}
