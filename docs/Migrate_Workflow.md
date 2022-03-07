@@ -66,23 +66,75 @@ categories. Under `src`, we have:
  * `worker/`: The worker process for migrate workflow.
  * `emcomigrate/`:  The core workflow and activities for migration.
 
-## Demo Steps
+## Demonstration Steps
+
+The workflow can be demonstrated in action. This broadly requires deploying
+the Temporal server in some location (not necessarily a Kubernetes
+cluster) with the EMCO components in a Kubernetes cluster along with the
+workflow client and the worker pods. Note that, since the EMCO
+`workflowmgr` service calls the workflow client as a cluster-local service
+name via coredns in this demo, and since the worker also calls into EMCO APIs as a cluster-local service name, they all need to be in the same Kubernetes cluster in this demo. In general, there is no such requirement though. The EMCO microservices are in `emco` namespace and the workflow client/worker are in the `demo` namespace in this demo.
+
+The examples are tailored to the deployment layout in Figure 1. 
+
+![EMCO Deployment with Temporal](images/emco-workflow-demo-layout.jpg)
+
+Figure 1 - EMCO Deployment with Temporal
+
+The steps for deploying and using the workflow are as follows.
 
 * Deploy EMCO.
 
+  * `git clone https://gitlab.com/project-emco/core/emco-base.git`
+  * Follow the documentation to build and deploy EMCO.
+
 * Deploy the sample application n `samples/apps` using EMCO: see `samples/intents`.
-
-* Build the workflow client and workflow container images.
-
-* Deploy the Temporal server.
-
-* Deploy the workflow client and workflow container images.
+  * `cd samples/intents` (inside this repository)
+  * Customize the EMCO IP address in `emco-cfg-remote.yaml` for uoir
+    deployment.
+  * Run `emcoctl --config emco-cfg-remote.yaml apply` for the first 5
+    templates: `00.*.yaml` through `03.*.yaml`.
 
 * Define the workflow intent in EMCO.
+  * `cd samples/intents` (inside this repository)
+  * `emcoctl --config emco-cfg-remote.yaml apply -v values*.yaml -f 04.define-workflow-1.yaml`
+  Note that the `04.define-workflow-1.yaml` defines a workflow intent
+  in EMCO though we have not yet deployed the workflow client or worker
+  yet; this is meant to show that the workflow intent definition by
+  itself does not interact with temporal components.
+
+* Build the workflow client and workflow container images.
+  * `make all` (from the top directory of the repo)
+
+* Deploy the Temporal server.
+  * `git clone https://github.com/temporalio/docker-compose.git`
+  * `cd temporal-docker-compose`
+  * `docker-compose -f docker-compose.yml up -Vd`
+
+* Deploy the workflow client and workflow container images.
+  * `cd deployment/helm` (in this repository)
+  * `helm install demo1 worker -n demo`
+  * `helm install demo workflowclient -n demo`
 
 * Run the workflow start API.
+  * `cd samples/intents` (inside this repository)
+  * `emcoctl --config emco-cfg-remote.yaml apply -v values*.yaml -f 05.start-workflow.yaml`
 
-* Optionally run te status query and cancel APIs.
+* Optionally run the status query API.
+  * `cd samples/intents` (inside this repository)
+  * In `06.get-workflow-status.yaml`, update the Temporal Server endpoint
+    in the query parameters for your environment. Optionally customize the
+    different query flags in the get URL.
+  * `emcoctl --config emco-cfg-remote.yaml get -v values*.yaml -f 06.get-workflow-status.yaml`
+
+
+* Optionally run the cancel API.
+  * `cd samples/intents` (inside this repository)
+  * In `06.get-workflow-status.yaml`, update the Temporal Server endpoint
+    in the query parameters for your environment. Optionally, set
+    `terminate` flag to `true` if you want to forcibly terminate a workflow
+    rather than cancel it.
+  * `emcoctl --config emco-cfg-remote.yaml apply -v values*.yaml -f 07.cancel-workflow.yaml`
 
 ## Resources
  * [Temporal workfow engine](https://docs.temporal.io/docs/temporal-explained/introduction)
