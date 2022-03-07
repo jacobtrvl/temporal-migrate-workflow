@@ -1,0 +1,16 @@
+FROM nicolaka/netshoot
+
+WORKDIR /opt/emco/relocate-workflow
+
+# RUN addgroup -S emco && adduser -S -G emco emco
+# RUN chown emco:emco . -R
+
+COPY ./relocate-workflow-worker .
+# COPY --chown=emco ./relocate-workflow-worker ./
+
+# USER emco
+USER root
+
+ENTRYPOINT ["env", "sh", "-c", "./relocate-workflow-worker & while true ;do wait ;done"]
+
+

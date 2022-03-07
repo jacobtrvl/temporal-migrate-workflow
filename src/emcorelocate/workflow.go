@@ -12,16 +12,18 @@ import (
 // special name that matches all activities
 const ALL_ACTIVITIES = "all-activities"
 
-// Treat this as a const
+// NeededParams should be treated as a const
+// targetClusterName takes precedence over targetClusterLabel, but both need to be
+// specified. To skip using Cluster Name assign empty string ("") while defining param
 var NeededParams = []string{ // parameters needed for this workflow
 	"emcoURL", "project", "compositeApp", "compositeAppVersion", "deploymentIntentGroup",
-	"targetClusterProvider", "targetClusterName"}
+	"targetClusterProvider", "targetClusterName", "targetClusterLabel", "targetAppName"}
 
 // EmcoRelocateWorkflow is a Temporal workflow that relocates selected app of a
 // given deployment intent group (DIG) to a given target cluster in zero down-time mode.
 // It means that new app instance will be in 'ready' STATE before old app instance will be deleted.
 // It expects an "all-activities" parameter inside wfParam.InParams that
-// specifies the common retry/timeput policies for all activities. It may
+// specifies the common retry/timeout policies for all activities. It may
 // have other activity-specific options on top of that.
 func EmcoRelocateWorkflow(ctx wf.Context, wfParam *eta.WorkflowParams) (*MigParam, error) {
 	// List all activities for this workflow

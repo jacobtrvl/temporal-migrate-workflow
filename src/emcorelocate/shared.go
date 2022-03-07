@@ -5,11 +5,18 @@ package emcorelocate
 
 const MigTaskQueue = "RELOCATE_TASK_Q"
 
+type UpdatePhase int8
+
+const (
+	ApplyPhase UpdatePhase = iota
+	DeletePhase
+)
+
 type AppNameDetails struct {
 	AppName       string
 	AppIntentName string
 	//TODO: replace phase var to handle enum instead of plain string
-	Phase         string
+	Phase         UpdatePhase
 	PrimaryIntent IntentStruc
 }
 

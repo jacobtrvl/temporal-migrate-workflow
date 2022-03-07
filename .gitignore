@@ -3,3 +3,4 @@
 *.iws
 .idea/
 bin/
+deployment/emco/cfg/*

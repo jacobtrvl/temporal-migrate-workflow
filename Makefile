@@ -4,19 +4,29 @@ export GO111MODULE=on
 export EMCOBUILDROOT=$(shell pwd)
 export CONFIG := $(wildcard config/*.txt)
 
-all: build-docker-worker build-docker-workflowclient
+ifndef WORKFLOWS
+WORKFLOWS=migrate relocate
+endif
 
-build-docker-worker: compile-worker
-	@echo "Building worker container"
-	docker build --rm -f build/docker/Dockerfile.relocateWorker -t relocate-workflow-worker ./bin/relocate-worker
+all: build-docker-workers build-docker-workflowclient
 
-compile-worker:
-	@echo "Compiling worker with app"
-	@mkdir -p bin/relocate-worker
-	@cd src/relocate-worker; go build -o ../../bin/relocate-worker/relocate-worker main.go
+build-docker-workers: compile-workers
+	@echo "Building worker containers"
+	@for w in $(WORKFLOWS); do \
+		docker build --rm -f build/docker/Dockerfile.$$w-workflow-worker -t "$$w-workflow-worker" ./bin/$$w-workflow-worker; \
+	done
 
-clean-worker:
-	/bin/rm -rf bin/relocate-worker
+compile-workers:
+	@echo "Compiling workers with app"
+	@for w in $(WORKFLOWS); do \
+		/bin/mkdir -p bin/$$w-workflow-worker; \
+		cd src/workers/$$w-workflow-worker; go build -o ../../../bin/$$w-workflow-worker/$$w-workflow-worker main.go; cd ../../../; \
+	done
+
+clean-workers:
+	@for w in $(WORKFLOWS); do \
+		/bin/rm -rf bin/$$w-workflow-worker; \
+	done
 
 build-docker-workflowclient: compile-workflowclient
 	@echo "Building workflowclient container"
@@ -33,7 +43,7 @@ compile-workflowclient:
 clean-workflowclient:
 	/bin/rm -rf bin/workflowclients
 
-clean: clean-worker clean-workflowclient
+clean: clean-workers clean-workflowclient
 
 test:
 	@echo "No tests yet"

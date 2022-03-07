@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -109,17 +110,38 @@ func GetDigAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 		}
 		fmt.Printf("\nGetDigAppIntents: body = %#v\n", appIntents)
 
+		//// Build list of appName/appIntentName details for this gpIntent
+		//appIntentNames := make([]AppNameDetails, 0, len(appIntents))
+		//for _, appIntent := range appIntents {
+		//	details := AppNameDetails{
+		//		AppName:       appIntent.Spec.AppName,
+		//		AppIntentName: appIntent.MetaData.Name,
+		//		Phase:         ApplyPhase,
+		//		PrimaryIntent: appIntent.Spec.Intent,
+		//	}
+		//	appIntentNames = append(appIntentNames, details)
+		//}
+		//migParam.AppsNameDetails[gpIntent.MetaData.Name] = appIntentNames
 		// Build list of appName/appIntentName details for this gpIntent
-		appIntentNames := make([]AppNameDetails, 0, len(appIntents))
+
+		// TODO []AppNameDetails shouldn't be a list? We want to relocate just 1 application.
+		// leave [] for now to maintain compatibility with original migrate workflow
+		var appIntentNames []AppNameDetails
 		for _, appIntent := range appIntents {
-			details := AppNameDetails{
-				AppName:       appIntent.Spec.AppName,
-				AppIntentName: appIntent.MetaData.Name,
-				//TODO: replace with enum
-				Phase:         "1",
-				PrimaryIntent: appIntent.Spec.Intent,
+			if strings.ToLower(appIntent.Spec.AppName) == strings.ToLower(migParam.InParams["targetAppName"]) {
+				targetApp := AppNameDetails{
+					AppName:       appIntent.Spec.AppName,
+					AppIntentName: appIntent.MetaData.Name,
+					Phase:         ApplyPhase,
+					PrimaryIntent: appIntent.Spec.Intent,
+				}
+				appIntentNames = append(appIntentNames, targetApp)
 			}
-			appIntentNames = append(appIntentNames, details)
+		}
+		if len(appIntentNames) < 1 {
+			err := fmt.Errorf("error: %v targetAppName not found", migParam.InParams["targetAppName"])
+			fmt.Fprintf(os.Stderr, err.Error())
+			return nil, err
 		}
 		migParam.AppsNameDetails[gpIntent.MetaData.Name] = appIntentNames
 	}
@@ -130,34 +152,48 @@ func GetDigAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 func UpdateAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error) {
 
 	// Update the intents, walking through migParam.AppsNameDetails map
-	newAppSpecIntent := IntentStruc{ // all apps get this spec intent
-		AllOfArray: []AllOf{
-			{
-				ProviderName: migParam.InParams["targetClusterProvider"],
-				ClusterName:  migParam.InParams["targetClusterName"],
+	// By default use Cluster Name, if not present use Cluster Label
+	var newAppSpecIntent IntentStruc
+	cName, ok := migParam.InParams["targetClusterName"]; if ok && cName != "" {
+		newAppSpecIntent = IntentStruc{ // all apps get this spec intent
+			AllOfArray: []AllOf{
+				{
+					ProviderName: migParam.InParams["targetClusterProvider"],
+					ClusterName:  cName,
+				},
 			},
-		},
+		}
+	} else {
+		newAppSpecIntent = IntentStruc{ // all apps get this spec intent
+			AllOfArray: []AllOf{
+				{
+					ProviderName: migParam.InParams["targetClusterProvider"],
+					ClusterLabelName:  migParam.InParams["targetClusterLabel"],
+				},
+			},
+		}
 	}
+
 
 	for gpIntentName, appNameDetails := range migParam.AppsNameDetails {
 		appIntentBaseURL := buildAppIntentsURL(migParam.GenericPlacementIntentURL, gpIntentName)
 		for index, appNameDetails := range appNameDetails {
 			switch appNameDetails.Phase {
-			case "1":
+			case ApplyPhase:
 				for _, plcIntent := range appNameDetails.PrimaryIntent.AllOfArray {
 					newAppSpecIntent.AllOfArray = append(newAppSpecIntent.AllOfArray, plcIntent)
 				}
 				for _, plcIntent := range appNameDetails.PrimaryIntent.AnyOfArray {
 					newAppSpecIntent.AnyOfArray = append(newAppSpecIntent.AnyOfArray, plcIntent)
 				}
-				migParam.AppsNameDetails[gpIntentName][index].Phase = "2"
-			case "2":
+				migParam.AppsNameDetails[gpIntentName][index].Phase = DeletePhase
+			case DeletePhase:
 				// Skip primary placement intents
-				migParam.AppsNameDetails[gpIntentName][index].Phase = "1" // TODO: is it necessary?
+				migParam.AppsNameDetails[gpIntentName][index].Phase = ApplyPhase // TODO: is it necessary?
 			default:
-				wferr := fmt.Errorf("error: %v is a bad phase", appNameDetails.Phase)
-				fmt.Fprintf(os.Stderr, wferr.Error())
-				return nil, wferr
+				err := fmt.Errorf("error: %v is a bad phase", appNameDetails.Phase)
+				fmt.Fprintf(os.Stderr, err.Error())
+				return nil, err
 			}
 
 			appIntentURL := appIntentBaseURL + "/" + appNameDetails.AppIntentName
@@ -281,7 +317,6 @@ func getHttpRespBody(url string) ([]byte, error) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Printf("\nBody: %s\n", string(b)) // FIXME rm later
 
 	return b, nil
 }
