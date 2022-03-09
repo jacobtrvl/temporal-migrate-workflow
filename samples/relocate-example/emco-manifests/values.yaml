@@ -1,0 +1,42 @@
+# General
+ProjectName: proj1
+AdminCloud: default
+CompositeApp: capp1
+CompositeProfile: capp1-profile
+DeploymentIntent: dig1
+GenericPlacementIntent: dig1-placement-intent
+
+# Provider1, Cluster1
+ClusterProvider1: provider1
+Cluster1Name: cluster1
+Cluster1Label: edge-cluster1
+Cluster1KubeConfig: ../cfg/cluster1.config
+
+# Provider2, Cluster2
+ClusterProvider2: provider2
+Cluster2Name: cluster2
+Cluster2Label: edge-cluster2
+Cluster2KubeConfig: ../cfg/cluster2.config
+
+# Collectd App
+CollectdAppName: collectd
+CollectdAppFile: ../apps/collectd.tar.gz
+ProfileCollectdAppName: collectd-profile
+ProfileCollectdAppFile: ../apps/collectd_profile.tar.gz
+CollectdAppPlacementIntent: collectd-placement-intent
+
+# Workflow Intent
+WfIntentName: dig1-workflow-intent
+WfClientEndpointName: 10.254.185.48
+WfClientEndpointPort: 32321
+WfClientName: relocate_workflowclient
+WfID: relocate-upf-1
+WfTaskQueue: RELOCATE_TASK_Q
+WfEmcoURL: http://10.254.185.70:30415
+
+# Temporal server
+TemporalServerIP: temporaltest-frontend-headless
+TemporalServerPort: 7233
+
+# EMCO Controllers
+RsyncPort: 9031

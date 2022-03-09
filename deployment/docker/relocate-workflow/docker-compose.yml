@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2022 Intel Corporation
+# This is the docker-compose.yml file used for running all the EMCO microservices on local machine
+version: '3.7'
+networks:
+  emconet:
+    driver: bridge
+    name: emconet
+services:
+  relocate-workflow-worker:
+    image: relocate-workflow-worker:latest
+    networks:
+      - emconet
+    environment:
+      - TEMPORAL_SERVER=${TEMPORAL_SERVER}
+  workflow-client:
+    image: workflow-client:latest
+    networks:
+      - emconet
+    ports:
+      - 9090:9090
+    environment:
+      - TEMPORAL_SERVER=${TEMPORAL_SERVER}
+    depends_on:
+      - "relocate-workflow-worker"

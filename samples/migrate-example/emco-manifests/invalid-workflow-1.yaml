@@ -1,0 +1,34 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2022 Intel Corporation
+
+#create the workflow intent
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/{{.CompositeApp}}/v1/deployment-intent-groups/{{.DeploymentIntent}}/workflow-intents
+metadata :
+  name: {{.DeploymentIntent}}-workflow-intent
+  description: "description for intent"
+spec:
+  workflowContainer:
+     clientEndpointName: "client1"
+     clientEndpointPort: 9070
+  temporal:
+     workflowName: "my-workflow"
+     workflowStartOptions:
+       id: "migrate-apps-1"
+       taskQueue: "MIGRATION_TASK_Q"
+     workflowAppParams:
+       all-activities: ""
+          "emcoURL": "http://192.168.1.201:30415",
+          "project": "proj1",
+          "compositeApp": "capp1",
+          "compositeAppVersion": "v1",
+          "deploymentIntentGroup": "dig1",
+          "targetClusterProvider": "provider2",
+          "targetClusterName": "cluster2"
+
+
+  # Temporal-specific, workflow-spcific params
+  # Shared vs dedicated container 
+  # Local cluster vs. remote cluster
+

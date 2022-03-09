@@ -1,0 +1,127 @@
+---
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps
+metadata :
+  name: temporal-{{.CompositeApp}}
+  description: "temporal test composite app entry"
+spec:
+  compositeAppVersion: v1
+
+---
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/temporal-{{.CompositeApp}}/v1/apps
+metadata :
+  name: {{.WorkerAppName}}
+  description: "worker application is part of free5gc"
+file:
+  {{.WorkerAppFile}}
+
+---
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/temporal-{{.CompositeApp}}/v1/apps
+metadata :
+  name: {{.WorkflowClientAppName}}
+  description: "workflow-client application is part of free5gc"
+file:
+  {{.WorkflowClientAppFile}}
+
+---
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/temporal-{{.CompositeApp}}/v1/composite-profiles
+metadata :
+  name: temporal-{{.CompositeProfile}}
+  description: "profile entry for temporal composite app"
+
+---
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/temporal-{{.CompositeApp}}/v1/composite-profiles/temporal-{{.CompositeProfile}}/profiles
+metadata :
+  name: {{.ProfileWorkerAppName}}
+  description: "profile for worker application"
+spec:
+  app: {{.WorkerAppName}}
+file:
+  {{.ProfileWorkerAppFile}}
+
+---
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/temporal-{{.CompositeApp}}/v1/composite-profiles/temporal-{{.CompositeProfile}}/profiles
+metadata :
+  name: {{.ProfileWorkflowClientAppName}}
+  description: "profile for workflow-client application"
+spec:
+  app: {{.WorkflowClientAppName}}
+file:
+  {{.ProfileWorkflowClientAppFile}}
+
+---
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/temporal-{{.CompositeApp}}/v1/deployment-intent-groups
+metadata :
+  name: temporal-{{.DeploymentIntent}}
+  description: "temporal deployment intent group"
+spec:
+  compositeProfile: temporal-{{.CompositeProfile}}
+  version: r1
+  logicalCloud: {{.AdminCloud}}
+  overrideValues: []
+
+---
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/temporal-{{.CompositeApp}}/v1/deployment-intent-groups/temporal-{{.DeploymentIntent}}/intents
+metadata :
+  name: temporal-{{.DeploymentIntent}}
+  description: "register genreic placement intent"
+spec:
+  intent:
+    genericPlacementIntent: {{.GenericPlacementIntent}}
+
+---
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/temporal-{{.CompositeApp}}/v1/deployment-intent-groups/temporal-{{.DeploymentIntent}}/generic-placement-intents
+metadata :
+  name: {{.GenericPlacementIntent}}
+  description: "define generic placement intent"
+
+---
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/temporal-{{.CompositeApp}}/v1/deployment-intent-groups/temporal-{{.DeploymentIntent}}/generic-placement-intents/{{.GenericPlacementIntent}}/app-intents
+metadata:
+  name: {{.WorkerAppPlacementIntent}}
+  description: "worker placement intent"
+spec:
+  app: {{.WorkerAppName}}
+  intent:
+    allOf:
+    - clusterProvider: {{.ClusterProvider}}
+      clusterLabel: {{.MecHost1Label}}
+
+---
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/temporal-{{.CompositeApp}}/v1/deployment-intent-groups/temporal-{{.DeploymentIntent}}/generic-placement-intents/{{.GenericPlacementIntent}}/app-intents
+metadata:
+  name: {{.WorkflowClientAppPlacementIntent}}
+  description: "workflow client placement intent"
+spec:
+  app: {{.WorkflowClientAppName}}
+  intent:
+    allOf:
+    - clusterProvider: {{.ClusterProvider}}
+      clusterLabel: {{.MecHost1Label}}
+
+---
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/temporal-{{.CompositeApp}}/v1/deployment-intent-groups/temporal-{{.DeploymentIntent}}/approve
+

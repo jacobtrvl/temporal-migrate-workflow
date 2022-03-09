@@ -1,0 +1,104 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2022 Intel Corporation
+
+#creating controller entries
+version: emco/v2
+resourceContext:
+  anchor: controllers
+metadata :
+   name: rsync
+spec:
+  host: rsync
+  port: {{.RsyncPort}}
+
+---
+#creating cluster provider 1
+version: emco/v2
+resourceContext:
+  anchor: cluster-providers
+metadata :
+   name: {{.ClusterProvider1}}
+
+---
+#creating cluster 1
+version: emco/v2
+resourceContext:
+  anchor: cluster-providers/{{.ClusterProvider1}}/clusters
+metadata :
+   name: {{.Cluster1Name}}
+file:
+   {{.Cluster1KubeConfig}}
+
+---
+#Add label cluster 1
+version: emco/v2
+resourceContext:
+  anchor: cluster-providers/{{.ClusterProvider1}}/clusters/{{.Cluster1Name}}/labels
+clusterLabel: {{.Cluster1Label}}
+
+---
+#creating cluster provider 2
+version: emco/v2
+resourceContext:
+  anchor: cluster-providers
+metadata :
+   name: {{.ClusterProvider2}}
+
+---
+#creating cluster 2
+version: emco/v2
+resourceContext:
+  anchor: cluster-providers/{{.ClusterProvider2}}/clusters
+metadata :
+   name: {{.Cluster2Name}}
+file:
+   {{.Cluster2KubeConfig}}
+
+---
+#Add label cluster 2
+version: emco/v2
+resourceContext:
+  anchor: cluster-providers/{{.ClusterProvider2}}/clusters/{{.Cluster2Name}}/labels
+clusterLabel: {{.Cluster2Label}}
+
+---
+#create project
+version: emco/v2
+resourceContext:
+  anchor: projects
+metadata :
+   name: {{.ProjectName}}
+
+---
+#create default logical cloud with admin permissions
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/logical-clouds
+metadata:
+  name: {{.AdminCloud}}
+spec:
+  level: "0"
+
+---
+#add cluster reference 1 to logical cloud
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/logical-clouds/{{.AdminCloud}}/cluster-references
+metadata:
+  name: lc-cl-1
+spec:
+  clusterProvider: {{.ClusterProvider1}}
+  cluster: {{.Cluster1Name}}
+  loadbalancerIp: "0.0.0.0"
+
+---
+#add cluster reference 2 to logical cloud
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/logical-clouds/{{.AdminCloud}}/cluster-references
+metadata:
+  name: lc-cl-2
+spec:
+  clusterProvider: {{.ClusterProvider2}}
+  cluster: {{.Cluster2Name}}
+  loadbalancerIp: "0.0.0.0"

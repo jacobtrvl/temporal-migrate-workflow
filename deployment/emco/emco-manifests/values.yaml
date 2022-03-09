@@ -1,0 +1,65 @@
+ProjectName: relocate-workflows
+AdminCloud: orange-workflows
+ClusterProvider: orange-prov
+
+# Cluster: MEC Host 1 values
+MecHost1: meh01
+MecHost1Label: meh01-label
+MecHost1KubeConfig: ../cfg/meh1.config
+
+## Cluster: MEC Host 2 values
+#MecHost2: meh02
+#MecHost2Label: meh02-label
+#MecHost2KubeConfig: ../cfg/meh2.config
+#
+## Cluster: Core values
+#CoreCluster: core01
+#CoreClusterLabel: core01-label
+#CoreClusterKubeConfig: ../cfg/core.config
+#
+## Cluster: RAN values
+#RanCluster: ran01
+#RanClusterLabel: ran01-label
+#RanClusterKubeConfig: ../cfg/ran.config
+
+# Composite Apps
+CompositeApp: ca
+
+# Composite Profile Groups
+CompositeProfile: composite-profile
+
+# Deployment Intent Groups
+DeploymentIntent: deployment-intent
+
+# Intents
+GenericPlacementIntent: generic-placement
+
+# NF: Worker values
+WorkerAppName: worker
+WorkerAppFile: ../pkg/apps/worker-0.1.0.tgz
+ProfileWorkerAppName: worker-profile
+ProfileWorkerAppFile: ../pkg/profiles/worker-profile.tar.gz
+WorkerAppPlacementIntent: worker-placement-intent
+
+# NF: WorkflowClient values
+WorkflowClientAppName: workflowclient
+WorkflowClientAppFile: ../pkg/apps/workflowclient-0.1.0.tgz
+ProfileWorkflowClientAppName: workflowclient-profile
+ProfileWorkflowClientAppFile: ../pkg/profiles/workflowclient-profile.tar.gz
+WorkflowClientAppPlacementIntent: workflowclient-placement-intent
+ 
+# EMCO Config
+HostIP: 10.254.185.70
+GacPort:        30493
+RsyncPort:      30441
+DtcPort:        30483
+NpsPort:        30485
+OvnPort:        30473
+SdsPort:        30486
+SfcPort:        30456
+SfcClientPort:  30458
+HpaplcPort:     30459
+HpaacPort:      30443
+ClmPort:        30461
+DcmPort:        30477
+ItsPort:        30487

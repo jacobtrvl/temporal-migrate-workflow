@@ -1,0 +1,36 @@
+#create the workflow intent
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/{{.CompositeApp}}/v1/deployment-intent-groups/{{.DeploymentIntent}}/temporal-workflow-intents
+metadata :
+  name: {{.WfIntentName}}
+  description: "description for intent"
+spec:
+  workflowClient:
+    clientEndpointName: {{.WfClientEndpointName}}
+    clientEndpointPort: {{.WfClientEndpointPort}}
+  temporal:
+    workflowClientName: {{.WfClientName}}
+    workflowStartOptions:
+      id: {{.WfID}}
+      taskQueue: {{.WfTaskQueue}}
+      retryPolicy:
+        maximumAttempts: 5
+    workflowParams:
+      activityOptions:
+        all-activities:
+          startToCloseTimeout: 60000000000
+          heartbeatTimeout: 50000000000
+          retryPolicy:
+            initialInterval: 10
+      activityParams:
+        all-activities:
+          emcoURL: {{.WfEmcoURL}}
+          project: {{.ProjectName}}
+          compositeApp: {{.CompositeApp}}
+          compositeAppVersion: v1
+          deploymentIntentGroup: {{.DeploymentIntent}}
+          targetClusterProvider: {{.ClusterProvider2}}
+          targetClusterName: ""
+          targetClusterLabel: {{.Cluster2Label}}
+          targetAppName: {{.CollectdAppName}}

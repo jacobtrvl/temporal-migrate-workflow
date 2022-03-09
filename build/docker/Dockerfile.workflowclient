@@ -15,4 +15,3 @@ EXPOSE 9090
 USER root
 
 ENTRYPOINT ["./http_server"]
-

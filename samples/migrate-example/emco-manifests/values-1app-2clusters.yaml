@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2022 Intel Corporation
+
+RsyncPort: 9031
+ProjectName: proj1
+ClusterProvider1: provider1
+ClusterName1: cluster1
+KubeConfig1: ../cfg/c1-config
+ClusterProvider2: provider2
+ClusterName2: cluster2
+KubeConfig2: ../cfg/c2-config
+AdminCloud: default
+
+CompositeApp: capp1
+App1: collectd
+HelmApp1: ../apps/collectd.tar.gz
+ProfileApp1: ../apps/collectd_profile.tar.gz
+
+DeploymentIntent: dig1
+
+WfClientName: demo-workflowclient.demo.svc.cluster.local
+WfClientPort: 9090

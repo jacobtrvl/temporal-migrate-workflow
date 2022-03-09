@@ -13,4 +13,3 @@ USER root
 
 ENTRYPOINT ["env", "sh", "-c", "./migrate-workflow-worker & while true ;do wait ;done"]
 
-

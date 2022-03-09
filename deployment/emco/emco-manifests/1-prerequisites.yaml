@@ -1,0 +1,152 @@
+---
+# create rsync controller
+version: emco/v2
+resourceContext:
+  anchor: controllers
+metadata :
+   name: rsync
+spec:
+  host: {{.HostIP}}
+  port: {{.RsyncPort}}
+
+---
+# create provider
+version: emco/v2
+resourceContext:
+  anchor: cluster-providers
+metadata :
+   name: {{.ClusterProvider}}
+
+---
+# create cluster -> MEC Host 1
+version: emco/v2
+resourceContext:
+  anchor: cluster-providers/{{.ClusterProvider}}/clusters
+metadata :
+   name: {{.MecHost1}}
+file:
+  {{.MecHost1KubeConfig}}
+
+---
+# label cluster  -> MEC Host 1
+version: emco/v2
+resourceContext:
+  anchor: cluster-providers/{{.ClusterProvider}}/clusters/{{.MecHost1}}/labels
+clusterLabel: {{.MecHost1Label}}
+
+#---
+## create cluster -> MEC Host 2
+#version: emco/v2
+#resourceContext:
+#  anchor: cluster-providers/{{.ClusterProvider}}/clusters
+#metadata :
+#  name: {{.MecHost2}}
+#file:
+#  {{.MecHost2KubeConfig}}
+#
+#---
+## label cluster  -> MEC Host 2
+#version: emco/v2
+#resourceContext:
+#  anchor: cluster-providers/{{.ClusterProvider}}/clusters/{{.MecHost2}}/labels
+#clusterLabel: {{.MecHost2Label}}
+#
+#---
+## create cluster -> Core
+#version: emco/v2
+#resourceContext:
+#  anchor: cluster-providers/{{.ClusterProvider}}/clusters
+#metadata :
+#   name: {{.CoreCluster}}
+#file:
+#  {{.CoreClusterKubeConfig}}
+#
+#---
+## label cluster -> Core
+#version: emco/v2
+#resourceContext:
+#  anchor: cluster-providers/{{.ClusterProvider}}/clusters/{{.CoreCluster}}/labels
+#clusterLabel: {{.CoreClusterLabel}}
+#
+#---
+## create cluster -> RAN
+#version: emco/v2
+#resourceContext:
+#  anchor: cluster-providers/{{.ClusterProvider}}/clusters
+#metadata :
+#  name: {{.RanCluster}}
+#file:
+#  {{.RanClusterKubeConfig}}
+#
+#---
+## label cluster -> RAN
+#version: emco/v2
+#resourceContext:
+#  anchor: cluster-providers/{{.ClusterProvider}}/clusters/{{.RanCluster}}/labels
+#clusterLabel: {{.RanClusterLabel}}
+
+---
+# create project
+version: emco/v2
+resourceContext:
+  anchor: projects
+metadata :
+  name: {{.ProjectName}}
+
+---
+# create admin logical cloud
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/logical-clouds
+metadata:
+  name: {{.AdminCloud}}
+spec:
+  level: "0"
+
+---
+# add reference - "MEC Host 1 cluster"
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/logical-clouds/{{.AdminCloud}}/cluster-references
+metadata:
+  name: {{.MecHost1Label}}
+spec:
+  clusterProvider: {{.ClusterProvider}}
+  cluster: {{.MecHost1}}
+  loadbalancerIp: "0.0.0.0"
+
+#---
+## add reference - "MEC Host 2 cluster"
+#version: emco/v2
+#resourceContext:
+#  anchor: projects/{{.ProjectName}}/logical-clouds/{{.AdminCloud}}/cluster-references
+#metadata:
+#  name: {{.MecHost2Label}}
+#spec:
+#  clusterProvider: {{.ClusterProvider}}
+#  cluster: {{.MecHost2}}
+#  loadbalancerIp: "0.0.0.0"
+#
+#---
+## add reference - "Core cluster"
+#version: emco/v2
+#resourceContext:
+#  anchor: projects/{{.ProjectName}}/logical-clouds/{{.AdminCloud}}/cluster-references
+#metadata:
+#  name: {{.CoreClusterLabel}}
+#spec:
+#  clusterProvider: {{.ClusterProvider}}
+#  cluster: {{.CoreCluster}}
+#  loadbalancerIp: "0.0.0.0"
+#
+#---
+## add reference - "RAN cluster"
+#version: emco/v2
+#resourceContext:
+#  anchor: projects/{{.ProjectName}}/logical-clouds/{{.AdminCloud}}/cluster-references
+#metadata:
+#  name: {{.RanClusterLabel}}
+#spec:
+#  clusterProvider: {{.ClusterProvider}}
+#  cluster: {{.RanCluster}}
+#  loadbalancerIp: "0.0.0.0"

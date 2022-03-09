@@ -1,0 +1,98 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2022 Intel Corporation
+
+---
+#creating collection composite app entry
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps
+metadata :
+  name: {{.CompositeApp}}
+  description: "test composite application"
+spec:
+  compositeAppVersion: v1
+
+---
+#adding app collectd to the composite app
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/{{.CompositeApp}}/v1/apps
+metadata :
+  name: {{.CollectdAppName}}
+  description: "description for app"
+file:
+  {{.CollectdAppFile}}
+
+---
+#creating collection composite profile entry
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/{{.CompositeApp}}/v1/composite-profiles
+metadata :
+  name: {{.CompositeProfile}}
+  description: "test composite profile"
+
+---
+#adding collectd profiles to the composite profile
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/{{.CompositeApp}}/v1/composite-profiles/{{.CompositeProfile}}/profiles
+metadata :
+  name: {{.ProfileCollectdAppName}}
+  description: "test collectd profile"
+spec:
+  app: {{.CollectdAppName}}
+file:
+  {{.ProfileCollectdAppFile}}
+
+---
+#create deployment intent group
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/{{.CompositeApp}}/v1/deployment-intent-groups
+metadata :
+  name: {{.DeploymentIntent}}
+  description: "description"
+spec:
+  compositeProfile: {{.CompositeProfile}}
+  version: r1
+  logicalCloud: {{.AdminCloud}}
+  overrideValues: []
+
+---
+#create intent in deployment intent group
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/{{.CompositeApp}}/v1/deployment-intent-groups/{{.DeploymentIntent}}/intents
+metadata :
+  name: {{.DeploymentIntent}}-intent
+  description: "description"
+spec:
+  intent:
+    genericPlacementIntent: {{.GenericPlacementIntent}}
+
+---
+#create the generic placement intent (notice the reference to the "default" logical cloud)
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/{{.CompositeApp}}/v1/deployment-intent-groups/{{.DeploymentIntent}}/generic-placement-intents
+metadata :
+  name: {{.GenericPlacementIntent}}
+  description: "description for app"
+spec:
+  logicalCloud: {{.AdminCloud}}
+
+---
+#add the App1 placement intent to the generic placement intent
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/{{.CompositeApp}}/v1/deployment-intent-groups/{{.DeploymentIntent}}/generic-placement-intents/{{.GenericPlacementIntent}}/app-intents
+metadata:
+  name: {{.CollectdAppPlacementIntent}}
+  description: "description of placement intent"
+spec:
+  app: {{.CollectdAppName}}
+  intent:
+    allOf:
+    - clusterProvider: {{.ClusterProvider1}}
+      clusterLabel: {{.Cluster1Label}}

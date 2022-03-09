@@ -1,0 +1,5 @@
+---
+# Instantiate multicluster
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/temporal-{{.CompositeApp}}/v1/deployment-intent-groups/temporal-{{.DeploymentIntent}}/instantiate
