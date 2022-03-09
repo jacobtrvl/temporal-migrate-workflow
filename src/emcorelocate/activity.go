@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 )
 
 // TODO REVISIT Copied from EMCO as import leads to conflicts
@@ -76,11 +75,15 @@ func GetDigAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 	gpiUrl := buildGenericPlacementIntentsURL(migParam.InParams)
 	fmt.Printf("\nGetDigAppIntents: gpiUrl = %s\n", gpiUrl)
 
+	statusAnchor := buildStatusAnchor(migParam.InParams)
+	fmt.Printf("\nGetDigAppIntents: statusUrl = %s\n", statusAnchor)
+
 	respBody, err := getHttpRespBody(gpiUrl)
 	if err != nil {
 		return nil, err
 	}
 	migParam.GenericPlacementIntentURL = gpiUrl
+	migParam.StatusAnchor = statusAnchor
 
 	var gpIntents []GenericPlacementIntent
 	if err := json.Unmarshal(respBody, &gpIntents); err != nil {
@@ -109,20 +112,6 @@ func GetDigAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 			return nil, decodeErr
 		}
 		fmt.Printf("\nGetDigAppIntents: body = %#v\n", appIntents)
-
-		//// Build list of appName/appIntentName details for this gpIntent
-		//appIntentNames := make([]AppNameDetails, 0, len(appIntents))
-		//for _, appIntent := range appIntents {
-		//	details := AppNameDetails{
-		//		AppName:       appIntent.Spec.AppName,
-		//		AppIntentName: appIntent.MetaData.Name,
-		//		Phase:         ApplyPhase,
-		//		PrimaryIntent: appIntent.Spec.Intent,
-		//	}
-		//	appIntentNames = append(appIntentNames, details)
-		//}
-		//migParam.AppsNameDetails[gpIntent.MetaData.Name] = appIntentNames
-		// Build list of appName/appIntentName details for this gpIntent
 
 		// TODO []AppNameDetails shouldn't be a list? We want to relocate just 1 application.
 		// leave [] for now to maintain compatibility with original migrate workflow
@@ -174,17 +163,42 @@ func UpdateAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 		}
 	}
 
-
 	for gpIntentName, appNameDetails := range migParam.AppsNameDetails {
 		appIntentBaseURL := buildAppIntentsURL(migParam.GenericPlacementIntentURL, gpIntentName)
 		for index, appNameDetails := range appNameDetails {
 			switch appNameDetails.Phase {
 			case ApplyPhase:
+				// For each PrimaryIntent in AllOfArray check if Intent is in the NewPlacementIntent.
+				// If not present, append to AllOfArray, to assure service continuity.
 				for _, plcIntent := range appNameDetails.PrimaryIntent.AllOfArray {
-					newAppSpecIntent.AllOfArray = append(newAppSpecIntent.AllOfArray, plcIntent)
+					skip := false
+					for _, intent := range newAppSpecIntent.AllOfArray {
+						if intent.ProviderName == plcIntent.ProviderName &&
+							((intent.ClusterName == plcIntent.ClusterName && intent.ClusterName != "") ||
+								intent.ClusterLabelName == plcIntent.ClusterLabelName && intent.ClusterLabelName != "") {
+							skip = true
+							fmt.Printf("LOG::target cluster \"%v\" already in placement intent. Skipping.", intent)
+						}
+					}
+					if !skip {
+						newAppSpecIntent.AllOfArray = append(newAppSpecIntent.AllOfArray, plcIntent)
+					}
 				}
+				// For each PrimaryIntent in AnyOfArray check if Intent is in the NewPlacementIntent.
+				// If not present, append to new AnyOfArray, to assure service continuity.
 				for _, plcIntent := range appNameDetails.PrimaryIntent.AnyOfArray {
-					newAppSpecIntent.AnyOfArray = append(newAppSpecIntent.AnyOfArray, plcIntent)
+					skip := false
+					for _, intent := range newAppSpecIntent.AnyOfArray {
+						if intent.ProviderName == plcIntent.ProviderName &&
+							((intent.ClusterName == plcIntent.ClusterName && intent.ClusterName != "") ||
+								intent.ClusterLabelName == plcIntent.ClusterLabelName && intent.ClusterLabelName != "") {
+							skip = true
+							fmt.Printf("LOG::target cluster \"%v\" already in placement intent. Skipping.", intent)
+						}
+					}
+					if !skip {
+						newAppSpecIntent.AnyOfArray = append(newAppSpecIntent.AnyOfArray, plcIntent)
+					}
 				}
 				migParam.AppsNameDetails[gpIntentName][index].Phase = DeletePhase
 			case DeletePhase:
@@ -268,7 +282,7 @@ func DoDigUpdate(ctx context.Context, migParam MigParam) (*MigParam, error) {
 func CheckReadinessStatus(ctx context.Context, migParam MigParam) (*MigParam, error) {
 
 	//TODO:add body
-	time.Sleep(time.Second * 20)
+	WatchGrpcEndpoint(fillQueryParams(migParam))
 
 	return &migParam, nil
 }
@@ -279,6 +293,16 @@ func buildDigURL(params map[string]string) string {
 	url += "/composite-apps/" + params["compositeApp"]
 	url += "/" + params["compositeAppVersion"]
 	url += "/deployment-intent-groups/" + params["deploymentIntentGroup"]
+
+	return url
+}
+
+func buildStatusAnchor(params map[string]string) string {
+	url := "projects/" + params["project"]
+	url += "/composite-apps/" + params["compositeApp"]
+	url += "/" + params["compositeAppVersion"]
+	url += "/deployment-intent-groups/" + params["deploymentIntentGroup"]
+	url += "/status"
 
 	return url
 }
