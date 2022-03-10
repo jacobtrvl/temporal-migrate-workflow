@@ -171,15 +171,7 @@ func UpdateAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 				// For each PrimaryIntent in AllOfArray check if Intent is in the NewPlacementIntent.
 				// If not present, append to AllOfArray, to assure service continuity.
 				for _, plcIntent := range appNameDetails.PrimaryIntent.AllOfArray {
-					skip := false
-					for _, intent := range newAppSpecIntent.AllOfArray {
-						if intent.ProviderName == plcIntent.ProviderName &&
-							((intent.ClusterName == plcIntent.ClusterName && intent.ClusterName != "") ||
-								intent.ClusterLabelName == plcIntent.ClusterLabelName && intent.ClusterLabelName != "") {
-							skip = true
-							fmt.Printf("LOG::target cluster \"%v\" already in placement intent. Skipping.", intent)
-						}
-					}
+					skip := skipAllOfPrimaryIntent(plcIntent, newAppSpecIntent.AllOfArray)
 					if !skip {
 						newAppSpecIntent.AllOfArray = append(newAppSpecIntent.AllOfArray, plcIntent)
 					}
@@ -187,15 +179,7 @@ func UpdateAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 				// For each PrimaryIntent in AnyOfArray check if Intent is in the NewPlacementIntent.
 				// If not present, append to new AnyOfArray, to assure service continuity.
 				for _, plcIntent := range appNameDetails.PrimaryIntent.AnyOfArray {
-					skip := false
-					for _, intent := range newAppSpecIntent.AnyOfArray {
-						if intent.ProviderName == plcIntent.ProviderName &&
-							((intent.ClusterName == plcIntent.ClusterName && intent.ClusterName != "") ||
-								intent.ClusterLabelName == plcIntent.ClusterLabelName && intent.ClusterLabelName != "") {
-							skip = true
-							fmt.Printf("LOG::target cluster \"%v\" already in placement intent. Skipping.", intent)
-						}
-					}
+					skip := skipAnyOfPrimaryIntent(plcIntent, newAppSpecIntent.AnyOfArray)
 					if !skip {
 						newAppSpecIntent.AnyOfArray = append(newAppSpecIntent.AnyOfArray, plcIntent)
 					}
@@ -253,7 +237,6 @@ func UpdateAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 
 	return &migParam, nil
 }
-
 
 func DoDigUpdate(ctx context.Context, migParam MigParam) (*MigParam, error) {
 
@@ -343,4 +326,138 @@ func getHttpRespBody(url string) ([]byte, error) {
 	}
 
 	return b, nil
+}
+
+func skipAllOfPrimaryIntent(primaryIntent AllOf, newIntents []AllOf) (skip bool) {
+	for _, newIntent := range newIntents {
+		skip = false
+		if newIntent.ProviderName != primaryIntent.ProviderName {
+			continue
+		} else if newIntent.ClusterName == primaryIntent.ClusterName && newIntent.ClusterName != "" {
+			skip = true
+			return
+		} else if newIntent.ClusterLabelName == primaryIntent.ClusterLabelName && newIntent.ClusterLabelName != "" {
+			skip = true
+			return
+		}
+
+		if primaryIntent.ClusterLabelName != "" {
+			clmEndpoint := GetClmEndpoint()
+			provider := primaryIntent.ProviderName
+			label := primaryIntent.ClusterLabelName
+
+			url := fmt.Sprintf("http://%v/v2/cluster-providers/%v/clusters?label=%v", clmEndpoint, provider, label)
+
+			respBody, _ := getHttpRespBody(url)
+
+			var clusters []string
+			if err := json.Unmarshal(respBody, &clusters); err != nil {
+				decodeErr := fmt.Errorf("Failed to decode GET responde body for URL %s.\n"+
+					"Decoder error: %#v\n", url, err)
+				fmt.Fprintf(os.Stderr, decodeErr.Error())
+			}
+
+			for _, cluster := range clusters {
+				if newIntent.ClusterName == cluster {
+					skip = true
+					fmt.Printf("Skipping: NewIntentName: %v already in clusters: %v covered by label: %v",
+						newIntent.ClusterName, clusters, primaryIntent.ClusterLabelName)
+					return
+				}
+			}
+		}
+
+		if newIntent.ClusterLabelName != "" {
+			clmEndpoint := GetClmEndpoint()
+			provider := newIntent.ProviderName
+			label := newIntent.ClusterLabelName
+
+			url := fmt.Sprintf("http://%v/v2/cluster-providers/%v/clusters?label=%v", clmEndpoint, provider, label)
+
+			respBody, _ := getHttpRespBody(url)
+
+			var clusters []string
+			if err := json.Unmarshal(respBody, &clusters); err != nil {
+				decodeErr := fmt.Errorf("Failed to decode GET responde body for URL %s.\n"+
+					"Decoder error: %#v\n", url, err)
+				fmt.Fprintf(os.Stderr, decodeErr.Error())
+			}
+
+			for _, cluster := range clusters {
+				if primaryIntent.ClusterName == cluster {
+					skip = true
+					fmt.Printf("Skipping: PrimaryIntentName: %v already in clusters: %v covered by label: %v",
+						primaryIntent.ClusterName, clusters, newIntent.ClusterLabelName)
+					return
+				}
+			}
+		}
+	}
+
+	return
+}
+
+func skipAnyOfPrimaryIntent(primaryIntent AnyOf, newIntents []AnyOf) (skip bool) {
+	for _, newIntent := range newIntents {
+		skip = false
+		if newIntent.ProviderName != primaryIntent.ProviderName {
+			continue
+		} else if newIntent.ClusterName == primaryIntent.ClusterName && newIntent.ClusterName != "" {
+			skip = true
+			return
+		} else if newIntent.ClusterLabelName == primaryIntent.ClusterLabelName && newIntent.ClusterLabelName != "" {
+			skip = true
+			return
+		}
+		//
+		if primaryIntent.ClusterLabelName != "" {
+			clmEndpoint := GetClmEndpoint()
+			provider := primaryIntent.ProviderName
+			label := primaryIntent.ClusterLabelName
+
+			url := fmt.Sprintf("http://%v/v2/cluster-providers/%v/clusters?label=%v", clmEndpoint, provider, label)
+
+			respBody, _ := getHttpRespBody(url)
+
+			var clusters []string
+			if err := json.Unmarshal(respBody, &clusters); err != nil {
+				decodeErr := fmt.Errorf("Failed to decode GET responde body for URL %s.\n"+
+					"Decoder error: %#v\n", url, err)
+				fmt.Fprintf(os.Stderr, decodeErr.Error())
+			}
+
+			for _, cluster := range clusters {
+				if newIntent.ClusterName == cluster {
+					skip = true
+					return
+				}
+			}
+		}
+
+		if newIntent.ClusterLabelName != "" {
+			clmEndpoint := GetClmEndpoint()
+			provider := newIntent.ProviderName
+			label := newIntent.ClusterLabelName
+
+			url := fmt.Sprintf("http://%v/v2/cluster-providers/%v/clusters?label=%v", clmEndpoint, provider, label)
+
+			respBody, _ := getHttpRespBody(url)
+
+			var clusters []string
+			if err := json.Unmarshal(respBody, &clusters); err != nil {
+				decodeErr := fmt.Errorf("Failed to decode GET responde body for URL %s.\n"+
+					"Decoder error: %#v\n", url, err)
+				fmt.Fprintf(os.Stderr, decodeErr.Error())
+			}
+
+			for _, cluster := range clusters {
+				if primaryIntent.ClusterName == cluster {
+					skip = true
+					return
+				}
+			}
+		}
+	}
+
+	return
 }

@@ -6,7 +6,6 @@ package emcorelocate
 import (
 	"fmt"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/encoding/protojson"
 	"strings"
 	"time"
 
@@ -56,6 +55,11 @@ func fillQueryParams(mp MigParam) (anchor, format, status, app, cluster string) 
 // TODO: This is done only for testing purposes. Please remove hardcoded Status Endpoint
 func GetOrchestratorGrpcEndpoint() string {
 	return "10.254.185.70:30416"
+}
+
+// TODO: This is done only for testing purposes. Please remove hardcoded Status Endpoint
+func GetClmEndpoint() string {
+	return "10.254.185.70:30461"
 }
 
 // WatchGrpcEndpoint reads the configuration file to get gRPC Endpoint
@@ -182,13 +186,4 @@ func newGrpcClient(endpoint string) (*grpc.ClientConn, error) {
 	}
 
 	return conn, err
-}
-
-func printResponse(resp *statusnotifypb.StatusNotification) {
-	jsonStatus, err := protojson.Marshal(resp)
-	if err != nil {
-		fmt.Println("Error Marshalling Status Notification to JSON:", err)
-		return
-	}
-	fmt.Printf("%v\n", string(jsonStatus))
 }
