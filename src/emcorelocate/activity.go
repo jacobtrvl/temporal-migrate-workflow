@@ -75,8 +75,9 @@ func GetDigAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 	gpiUrl := buildGenericPlacementIntentsURL(migParam.InParams)
 	fmt.Printf("\nGetDigAppIntents: gpiUrl = %s\n", gpiUrl)
 
+	// statusAnchor will be used to check deployment status
 	statusAnchor := buildStatusAnchor(migParam.InParams)
-	fmt.Printf("\nGetDigAppIntents: statusUrl = %s\n", statusAnchor)
+	fmt.Printf("\nGetDigAppIntents: statusAnchor = %s\n", statusAnchor)
 
 	respBody, err := getHttpRespBody(gpiUrl)
 	if err != nil {
@@ -127,6 +128,8 @@ func GetDigAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 				appIntentNames = append(appIntentNames, targetApp)
 			}
 		}
+		// TODO: We could use "equal", rather tan "less than". We consider just 1 app.
+		// If targetAppName wasn't found in the current deployment, return error
 		if len(appIntentNames) < 1 {
 			err := fmt.Errorf("error: %v targetAppName not found", migParam.InParams["targetAppName"])
 			fmt.Fprintf(os.Stderr, err.Error())
@@ -140,27 +143,15 @@ func GetDigAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 
 func UpdateAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error) {
 
-	// Update the intents, walking through migParam.AppsNameDetails map
-	// By default use Cluster Name, if not present use Cluster Label
-	var newAppSpecIntent IntentStruc
-	cName, ok := migParam.InParams["targetClusterName"]; if ok && cName != "" {
-		newAppSpecIntent = IntentStruc{ // all apps get this spec intent
-			AllOfArray: []AllOf{
-				{
-					ProviderName: migParam.InParams["targetClusterProvider"],
-					ClusterName:  cName,
-				},
+	// newAppSpecIntent is target intent for relocated app. For now we assume, that only
+	// cluster name can be used. TODO: Consider clusterLabel
+	newAppSpecIntent := IntentStruc{ // all apps get this spec intent
+		AllOfArray: []AllOf{
+			{
+				ProviderName: migParam.InParams["targetClusterProvider"],
+				ClusterName:  migParam.InParams["targetClusterName"],
 			},
-		}
-	} else {
-		newAppSpecIntent = IntentStruc{ // all apps get this spec intent
-			AllOfArray: []AllOf{
-				{
-					ProviderName: migParam.InParams["targetClusterProvider"],
-					ClusterLabelName:  migParam.InParams["targetClusterLabel"],
-				},
-			},
-		}
+		},
 	}
 
 	for gpIntentName, appNameDetails := range migParam.AppsNameDetails {
@@ -171,7 +162,7 @@ func UpdateAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 				// For each PrimaryIntent in AllOfArray check if Intent is in the NewPlacementIntent.
 				// If not present, append to AllOfArray, to assure service continuity.
 				for _, plcIntent := range appNameDetails.PrimaryIntent.AllOfArray {
-					skip := skipAllOfPrimaryIntent(plcIntent, newAppSpecIntent.AllOfArray)
+					skip := checkIfSkipPrimaryIntentAllOf(migParam, plcIntent, newAppSpecIntent.AllOfArray)
 					if !skip {
 						newAppSpecIntent.AllOfArray = append(newAppSpecIntent.AllOfArray, plcIntent)
 					}
@@ -179,15 +170,17 @@ func UpdateAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 				// For each PrimaryIntent in AnyOfArray check if Intent is in the NewPlacementIntent.
 				// If not present, append to new AnyOfArray, to assure service continuity.
 				for _, plcIntent := range appNameDetails.PrimaryIntent.AnyOfArray {
-					skip := skipAnyOfPrimaryIntent(plcIntent, newAppSpecIntent.AnyOfArray)
+					skip := checkIfSkipPrimaryIntentAnyOf(migParam, plcIntent, newAppSpecIntent.AnyOfArray)
 					if !skip {
 						newAppSpecIntent.AnyOfArray = append(newAppSpecIntent.AnyOfArray, plcIntent)
 					}
 				}
 				migParam.AppsNameDetails[gpIntentName][index].Phase = DeletePhase
+				break
 			case DeletePhase:
 				// Skip primary placement intents
 				migParam.AppsNameDetails[gpIntentName][index].Phase = ApplyPhase // TODO: is it necessary?
+				break
 			default:
 				err := fmt.Errorf("error: %v is a bad phase", appNameDetails.Phase)
 				fmt.Fprintf(os.Stderr, err.Error())
@@ -264,14 +257,14 @@ func DoDigUpdate(ctx context.Context, migParam MigParam) (*MigParam, error) {
 
 func CheckReadinessStatus(ctx context.Context, migParam MigParam) (*MigParam, error) {
 
-	//TODO:add body
-	WatchGrpcEndpoint(fillQueryParams(migParam))
+	anchor, format, status, app, cluster := fillQueryParams(migParam)
+	WatchGrpcEndpoint(migParam, anchor, format, status, app, cluster)
 
 	return &migParam, nil
 }
 
 func buildDigURL(params map[string]string) string {
-	url := params["emcoURL"]
+	url := params["emcoOrchEndpoint"]
 	url += "/v2/projects/" + params["project"]
 	url += "/composite-apps/" + params["compositeApp"]
 	url += "/" + params["compositeAppVersion"]
@@ -328,25 +321,30 @@ func getHttpRespBody(url string) ([]byte, error) {
 	return b, nil
 }
 
-func skipAllOfPrimaryIntent(primaryIntent AllOf, newIntents []AllOf) (skip bool) {
+// checkIfSkipPrimaryIntentAllOf is used to make sure, that in the newly created placement intent
+// there will not be any duplicated intents in AllOf array. If target Cluster was already present
+// in the Primary Intent we can skip Primary Intent and still service continuity will be maintained
+func checkIfSkipPrimaryIntentAllOf(mp MigParam, primaryIntent AllOf, newIntents []AllOf) (skip bool) {
 	for _, newIntent := range newIntents {
 		skip = false
+		// If source Provider and target Provider are different, don't skip Primary Intent
+		// If source Provider, target Provider and Cluster Name are the same, skip Primary Intent
 		if newIntent.ProviderName != primaryIntent.ProviderName {
 			continue
 		} else if newIntent.ClusterName == primaryIntent.ClusterName && newIntent.ClusterName != "" {
 			skip = true
 			return
-		} else if newIntent.ClusterLabelName == primaryIntent.ClusterLabelName && newIntent.ClusterLabelName != "" {
-			skip = true
-			return
 		}
 
+		// If Primary Intent is based on Cluster Label, rather than on Cluster Name
+		// Check if target Cluster isn't represented by that Cluster Label.
+		// If it is, skip Primary Intent. Otherwise, DIG Update will fail.
 		if primaryIntent.ClusterLabelName != "" {
-			clmEndpoint := GetClmEndpoint()
+			clmEndpoint := GetClmEndpoint(mp)
 			provider := primaryIntent.ProviderName
 			label := primaryIntent.ClusterLabelName
 
-			url := fmt.Sprintf("http://%v/v2/cluster-providers/%v/clusters?label=%v", clmEndpoint, provider, label)
+			url := fmt.Sprintf("%v/v2/cluster-providers/%v/clusters?label=%v", clmEndpoint, provider, label)
 
 			respBody, _ := getHttpRespBody(url)
 
@@ -366,52 +364,31 @@ func skipAllOfPrimaryIntent(primaryIntent AllOf, newIntents []AllOf) (skip bool)
 				}
 			}
 		}
-
-		if newIntent.ClusterLabelName != "" {
-			clmEndpoint := GetClmEndpoint()
-			provider := newIntent.ProviderName
-			label := newIntent.ClusterLabelName
-
-			url := fmt.Sprintf("http://%v/v2/cluster-providers/%v/clusters?label=%v", clmEndpoint, provider, label)
-
-			respBody, _ := getHttpRespBody(url)
-
-			var clusters []string
-			if err := json.Unmarshal(respBody, &clusters); err != nil {
-				decodeErr := fmt.Errorf("Failed to decode GET responde body for URL %s.\n"+
-					"Decoder error: %#v\n", url, err)
-				fmt.Fprintf(os.Stderr, decodeErr.Error())
-			}
-
-			for _, cluster := range clusters {
-				if primaryIntent.ClusterName == cluster {
-					skip = true
-					fmt.Printf("Skipping: PrimaryIntentName: %v already in clusters: %v covered by label: %v",
-						primaryIntent.ClusterName, clusters, newIntent.ClusterLabelName)
-					return
-				}
-			}
-		}
 	}
 
 	return
 }
 
-func skipAnyOfPrimaryIntent(primaryIntent AnyOf, newIntents []AnyOf) (skip bool) {
+// checkIfSkipPrimaryIntentAnyOf is used to make sure, that in the newly created placement intent
+// there will not be any duplicated intents in AnyOf array. If target Cluster was already present
+// in the Primary Intent we can skip Primary Intent and still service continuity will be maintained
+func checkIfSkipPrimaryIntentAnyOf(mp MigParam, primaryIntent AnyOf, newIntents []AnyOf) (skip bool) {
 	for _, newIntent := range newIntents {
 		skip = false
+		// If source Provider and target Provider are different, don't skip Primary Intent
+		// If source Provider, target Provider and Cluster Name are the same, skip Primary Intent
 		if newIntent.ProviderName != primaryIntent.ProviderName {
 			continue
 		} else if newIntent.ClusterName == primaryIntent.ClusterName && newIntent.ClusterName != "" {
 			skip = true
 			return
-		} else if newIntent.ClusterLabelName == primaryIntent.ClusterLabelName && newIntent.ClusterLabelName != "" {
-			skip = true
-			return
 		}
-		//
+
+		// If Primary Intent is based on Cluster Label, rather than on Cluster Name
+		// Check if target Cluster isn't represented by that Cluster Label.
+		// If it is, skip Primary Intent. Otherwise, DIG Update will fail.
 		if primaryIntent.ClusterLabelName != "" {
-			clmEndpoint := GetClmEndpoint()
+			clmEndpoint := GetClmEndpoint(mp)
 			provider := primaryIntent.ProviderName
 			label := primaryIntent.ClusterLabelName
 
@@ -429,30 +406,8 @@ func skipAnyOfPrimaryIntent(primaryIntent AnyOf, newIntents []AnyOf) (skip bool)
 			for _, cluster := range clusters {
 				if newIntent.ClusterName == cluster {
 					skip = true
-					return
-				}
-			}
-		}
-
-		if newIntent.ClusterLabelName != "" {
-			clmEndpoint := GetClmEndpoint()
-			provider := newIntent.ProviderName
-			label := newIntent.ClusterLabelName
-
-			url := fmt.Sprintf("http://%v/v2/cluster-providers/%v/clusters?label=%v", clmEndpoint, provider, label)
-
-			respBody, _ := getHttpRespBody(url)
-
-			var clusters []string
-			if err := json.Unmarshal(respBody, &clusters); err != nil {
-				decodeErr := fmt.Errorf("Failed to decode GET responde body for URL %s.\n"+
-					"Decoder error: %#v\n", url, err)
-				fmt.Fprintf(os.Stderr, decodeErr.Error())
-			}
-
-			for _, cluster := range clusters {
-				if primaryIntent.ClusterName == cluster {
-					skip = true
+					fmt.Printf("Skipping: NewIntentName: %v already in clusters: %v covered by label: %v",
+						newIntent.ClusterName, clusters, primaryIntent.ClusterLabelName)
 					return
 				}
 			}

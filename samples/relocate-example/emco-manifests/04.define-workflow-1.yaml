@@ -25,12 +25,13 @@ spec:
             initialInterval: 10
       activityParams:
         all-activities:
-          emcoURL: {{.WfEmcoURL}}
+          emcoOrchEndpoint: {{.WfEmcoOrch}}
+          emcoOrchStatusEndpoint: {{.WfEmcoOrchStatus}}
+          emcoClmEndpoint: {{.WfEmcoClm}}
           project: {{.ProjectName}}
           compositeApp: {{.CompositeApp}}
           compositeAppVersion: v1
           deploymentIntentGroup: {{.DeploymentIntent}}
           targetClusterProvider: {{.ClusterProvider2}}
-          targetClusterName: ""
-          targetClusterLabel: {{.Cluster2Label}}
+          targetClusterName: {{.Cluster2Name}}
           targetAppName: {{.CollectdAppName}}

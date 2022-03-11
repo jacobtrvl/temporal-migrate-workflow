@@ -45,26 +45,26 @@ func fillQueryParams(mp MigParam) (anchor, format, status, app, cluster string) 
 	format = "format=all"
 	status = "status=ready"
 	app = fmt.Sprintf("app=%s", mp.InParams["targetAppName"])
-	cluster = fmt.Sprintf("cluster=%s+%s",
-		mp.InParams["targetClusterProvider"], mp.InParams["targetClusterName"])
+	cluster = fmt.Sprintf("cluster=%s+%s", mp.InParams["targetClusterProvider"], mp.InParams["targetClusterName"])
 
 	return
 }
 
 // GetOrchestratorGrpcEndpoint gRPC endpoint for Orchestrator
 // TODO: This is done only for testing purposes. Please remove hardcoded Status Endpoint
-func GetOrchestratorGrpcEndpoint() string {
-	return "10.254.185.70:30416"
+func GetOrchestratorGrpcEndpoint(mp MigParam) string {
+	return mp.InParams["emcoOrchStatusEndpoint"]
 }
 
+// GetClmEndpoint is endpoint for cluster manager microservice
 // TODO: This is done only for testing purposes. Please remove hardcoded Status Endpoint
-func GetClmEndpoint() string {
-	return "10.254.185.70:30461"
+func GetClmEndpoint(mp MigParam) string {
+	return mp.InParams["emcoClmEndpoint"]
 }
 
 // WatchGrpcEndpoint reads the configuration file to get gRPC Endpoint
 // and makes a connection to watch status notifications.
-func WatchGrpcEndpoint(args ...string) {
+func WatchGrpcEndpoint(mp MigParam, args ...string) {
 	var endpoint string
 	var anchor string
 	var reg statusnotifypb.StatusRegistration
@@ -122,7 +122,7 @@ func WatchGrpcEndpoint(args ...string) {
 	switch s[0] {
 	case "projects":
 		if len(s) == 8 && s[2] == "composite-apps" && s[5] == "deployment-intent-groups" && s[7] == "status" {
-			endpoint = GetOrchestratorGrpcEndpoint()
+			endpoint = GetOrchestratorGrpcEndpoint(mp)
 			reg.Key = &statusnotifypb.StatusRegistration_DigKey{
 				DigKey: &statusnotifypb.DigKey{
 					Project:               s[1],

@@ -13,11 +13,9 @@ import (
 const ALL_ACTIVITIES = "all-activities"
 
 // NeededParams should be treated as a const
-// targetClusterName takes precedence over targetClusterLabel, but both need to be
-// specified. To skip using Cluster Name assign empty string ("") while defining param
 var NeededParams = []string{ // parameters needed for this workflow
-	"emcoURL", "project", "compositeApp", "compositeAppVersion", "deploymentIntentGroup",
-	"targetClusterProvider", "targetClusterName", "targetClusterLabel", "targetAppName"}
+	"emcoOrchEndpoint", "project", "compositeApp", "compositeAppVersion", "deploymentIntentGroup",
+	"targetClusterProvider", "targetClusterName", "targetAppName"}
 
 // EmcoRelocateWorkflow is a Temporal workflow that relocates selected app of a
 // given deployment intent group (DIG) to a given target cluster in zero down-time mode.

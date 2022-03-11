@@ -32,7 +32,9 @@ WfClientEndpointPort: 32321
 WfClientName: relocate_workflowclient
 WfID: relocate-upf-1
 WfTaskQueue: RELOCATE_TASK_Q
-WfEmcoURL: http://10.254.185.70:30415
+WfEmcoClm: http://10.254.185.70:30461
+WfEmcoOrch: http://10.254.185.70:30415
+WfEmcoOrchStatus: 10.254.185.70:30416
 
 # Temporal server
 TemporalServerIP: temporaltest-frontend-headless
