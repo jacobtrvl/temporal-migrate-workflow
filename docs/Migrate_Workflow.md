@@ -13,7 +13,7 @@ The reader is expected to be familiar with
 [EMCO](https://gitlab.com/project-emco/core/emco-base) and
 [Temporal](https://docs.temporal.io/docs/temporal-explained/introduction).
 In particular, it is important to read the document [Temporal Workflows in
-EMCO](https://gitlab.com/project-emco/core/emco-base/-/blob/emco-temporal/docs/user/Temporal_Workflows_In_EMCO.md) first.
+EMCO](https://gitlab.com/project-emco/core/emco-base/-/blob/main/docs/user/Temporal_Workflows_In_EMCO.md) first.
 
 ## Introduction
 The Edge Multi-Cluster Orchestrator (EMCO), an open source project in Linux
@@ -25,7 +25,8 @@ migrate stateful applications and other workflows as well.
 
 ## Reference Workflow For EMCO
 The relationship among the main workflow entities is explained in the document
-[Temporal Workflows in EMCO](https://gitlab.com/project-emco/core/emco-base/-/blob/emco-temporal/docs/user/Temporal_Workflows_In_EMCO.md). It is recapitulated below.
+[Temporal Workflows in
+EMCO](https://gitlab.com/project-emco/core/emco-base/-/blob/main/docs/user/Temporal_Workflows_In_EMCO.md). It is recapitulated below.
 
 In general, a workflow is executed by a worker entity within a worker process;
 there can be one or more worker entities within a worker process, and one or
@@ -40,7 +41,7 @@ workflow client and it starts only one workflow. But the source code
 layout, build environment and the workflow container image can all be
 extended to multiple workflow clients.
 
-The atructure of the workflow client container can take any form: EMCO does
+The structure of the workflow client container can take any form: EMCO does
 not mandate anything. In the migration workflow, the workflow client
 container has a HTTP server that receives a `HTTP POST` call from EMCO's
 `workflowmgr` microservice and executes the named workflow client binary
@@ -73,9 +74,15 @@ the Temporal server in some location (not necessarily a Kubernetes
 cluster) with the EMCO components in a Kubernetes cluster along with the
 workflow client and the worker pods. Note that, since the EMCO
 `workflowmgr` service calls the workflow client as a cluster-local service
-name via coredns in this demo, and since the worker also calls into EMCO APIs as a cluster-local service name, they all need to be in the same Kubernetes cluster in this demo. In general, there is no such requirement though. The EMCO microservices are in `emco` namespace and the workflow client/worker are in the `demo` namespace in this demo.
+name via coredns in this demo, and since the worker also calls into EMCO
+APIs as a cluster-local service name, they all need to be in the same
+Kubernetes cluster in this demo. In general, there is no such requirement
+though. The EMCO microservices are in `emco` namespace and the workflow
+client/worker are in the `demo` namespace in this demo.
 
-The examples are tailored to the deployment layout in Figure 1. 
+A possible deployment layout for the demo environment is shown in Figure 1.
+The demo will deploy the user app in Cluster 1 via EMCO, then migrate it to
+Cluster 2, and then optionally migrate it back to Cluster 1.
 
 ![EMCO Deployment with Temporal](images/emco-workflow-demo-layout.jpg)
 
@@ -88,7 +95,7 @@ The steps for deploying and using the workflow are as follows.
   * `git clone https://gitlab.com/project-emco/core/emco-base.git`
   * Follow the documentation to build and deploy EMCO.
 
-* Deploy the sample application n `samples/apps` using EMCO: see `samples/intents`.
+* Deploy the sample application in `samples/apps` using EMCO: see `samples/intents`.
   * `cd samples/intents` (inside this repository)
   * Customize the EMCO IP address in `emco-cfg-remote.yaml` for uoir
     deployment.
