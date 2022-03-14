@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	eta "gitlab.com/project-emco/core/emco-base/src/emcotemporalapi"
+	eta "gitlab.com/project-emco/core/emco-base/src/workflowmgr/pkg/emcotemporalapi"
 )
 
 func getTemporalSpec(filename string) (*eta.WfTemporalSpec, error) {
@@ -40,13 +40,11 @@ func getTemporalSpec(filename string) (*eta.WfTemporalSpec, error) {
 
 func validateSpec(spec *eta.WfTemporalSpec) error {
 	if spec.WfStartOpts.ID == "" {
-		err := fmt.Errorf("Error: Need to provide a name in " +
-			"spec.workflowStartOptions.id")
+		err := fmt.Errorf("Error: Need to provide a name in: %v\n", spec.WfStartOpts.TaskQueue)
 		return err
 	}
 	if spec.WfStartOpts.TaskQueue != "" {
-		warn := fmt.Errorf("Warning: Ignoring task queue name in " +
-			"spec.workflowStartOptions.taskQueue")
+		warn := fmt.Errorf("Warning: Ignoring task queue name in: %v\n", spec.WfStartOpts.TaskQueue)
 		fmt.Fprintln(os.Stderr, warn.Error())
 		// Warning, not an error
 	}

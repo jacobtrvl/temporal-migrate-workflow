@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	eta "gitlab.com/project-emco/core/emco-base/src/emcotemporalapi"
+	eta "gitlab.com/project-emco/core/emco-base/src/workflowmgr/pkg/emcotemporalapi"
 	wf "go.temporal.io/sdk/workflow"
 )
 

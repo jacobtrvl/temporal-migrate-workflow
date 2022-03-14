@@ -12,7 +12,7 @@ import (
 
 	"go.temporal.io/sdk/client"
 
-	eta "gitlab.com/project-emco/core/emco-base/src/emcotemporalapi"
+	eta "gitlab.com/project-emco/core/emco-base/src/workflowmgr/pkg/emcotemporalapi"
 )
 
 const (
