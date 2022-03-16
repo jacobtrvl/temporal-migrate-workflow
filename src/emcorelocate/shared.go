@@ -164,7 +164,6 @@ func WatchGrpcEndpoint(mp MigParam, args ...string) {
 		}
 		fmt.Printf("CheckReadinessStatus: StatusValue is %v\n", resp.StatusValue.String())
 		if resp.StatusValue.String() == "READY" {
-			fmt.Printf("CheckReadinessStatus: Pod is in READY state\n") //TODO: Rm when tested
 			if err := conn.Close(); err != nil {
 				fmt.Errorf("error wile closing conn: %s\n", err)
 			}

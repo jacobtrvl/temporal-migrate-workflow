@@ -11,14 +11,18 @@ profile packages (Profiles can be found at `./pkg/profiles`). Please adjust fiel
   * `repository` 
   * `tag`
 
-Also adjust `./root/emco-cfg.yaml` file.
+Also adjust `./root/emco-cfg.yaml` file to your environment.
 
-Moreover, you have to create Kubernetes `kube-config`. By default, one k8s clusters should be defined:
+Moreover, you have to copy Kubernetes `kube-config` files to the `./cfg` directory. 
+By default, one k8s clusters should be defined:
   * `./cfg/meh1.config`
 
-It can be extended. To add more clusters to the `Logical Cloud`, you can use existing manifests.
+To add more clusters to the `Logical Cloud`, you can use existing manifests.
 If you want to define more than 1 cluster, please adjust (uncomment cluster definitions) in the:
   * `./emco-manifests/1-prerequisites.yaml`
+
+Define appropriate placement intent in the:
+
   * `./emco-manifests/3-deployment.yaml`
 
 And create additional `kube-configs`:
