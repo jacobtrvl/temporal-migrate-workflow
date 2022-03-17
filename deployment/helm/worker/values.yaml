@@ -7,10 +7,10 @@ temporalServer: 192.168.0.33
 replicaCount: 1
 
 image:
-  repository: "registry.gitlab.com/project-emco/core/emco-base/migrate-workflow-worker"
+  repository: "registry.gitlab.com/project-emco/ecosystem/temporal-migrate-workflow/migrate-workflow-worker"
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "latest"
+  tag: "sundar-latest"
 
 imagePullSecrets: []
 nameOverride: ""

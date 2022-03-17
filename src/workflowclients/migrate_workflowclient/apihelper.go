@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	eta "gitlab.com/project-emco/core/emco-base/src/emcotemporalapi"
+	eta "gitlab.com/project-emco/core/emco-base/src/workflowmgr/pkg/emcotemporalapi"
 )
 
 func getTemporalSpec(filename string) (*eta.WfTemporalSpec, error) {
