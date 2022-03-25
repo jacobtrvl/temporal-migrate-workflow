@@ -75,16 +75,11 @@ func GetDigAppIntents(ctx context.Context, migParam MigParam) (*MigParam, error)
 	gpiUrl := buildGenericPlacementIntentsURL(migParam.InParams)
 	fmt.Printf("\nGetDigAppIntents: gpiUrl = %s\n", gpiUrl)
 
-	// statusAnchor will be used to check deployment status
-	statusAnchor := buildStatusAnchor(migParam.InParams)
-	fmt.Printf("\nGetDigAppIntents: statusAnchor = %s\n", statusAnchor)
-
 	respBody, err := getHttpRespBody(gpiUrl)
 	if err != nil {
 		return nil, err
 	}
 	migParam.GenericPlacementIntentURL = gpiUrl
-	migParam.StatusAnchor = statusAnchor
 
 	var gpIntents []GenericPlacementIntent
 	if err := json.Unmarshal(respBody, &gpIntents); err != nil {
@@ -257,9 +252,7 @@ func DoDigUpdate(ctx context.Context, migParam MigParam) (*MigParam, error) {
 
 func CheckReadinessStatus(ctx context.Context, migParam MigParam) (*MigParam, error) {
 
-	anchor, format, status, app, cluster := fillQueryParams(migParam)
-	WatchGrpcEndpoint(migParam, anchor, format, status, app, cluster)
-
+	WatchGrpcEndpoint(migParam)
 	return &migParam, nil
 }
 
@@ -269,16 +262,6 @@ func buildDigURL(params map[string]string) string {
 	url += "/composite-apps/" + params["compositeApp"]
 	url += "/" + params["compositeAppVersion"]
 	url += "/deployment-intent-groups/" + params["deploymentIntentGroup"]
-
-	return url
-}
-
-func buildStatusAnchor(params map[string]string) string {
-	url := "projects/" + params["project"]
-	url += "/composite-apps/" + params["compositeApp"]
-	url += "/" + params["compositeAppVersion"]
-	url += "/deployment-intent-groups/" + params["deploymentIntentGroup"]
-	url += "/status"
 
 	return url
 }

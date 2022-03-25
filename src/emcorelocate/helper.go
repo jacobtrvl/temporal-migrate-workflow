@@ -32,22 +32,11 @@ type AppNameDetails struct {
 
 type MigParam struct {
 	InParams                  map[string]string
-	StatusAnchor			  string
+	StatusAnchor              string
 	GenericPlacementIntentURL string
 	GenericPlacementIntents   []string
 	// map indexed by generic placement intent name
-	AppsNameDetails           map[string][]AppNameDetails
-}
-
-// fillQueryParams provides application parameters for WatchGrpcEndpoint function
-func fillQueryParams(mp MigParam) (anchor, format, status, app, cluster string) {
-	anchor = mp.StatusAnchor
-	format = "format=all"
-	status = "status=ready"
-	app = fmt.Sprintf("app=%s", mp.InParams["targetAppName"])
-	cluster = fmt.Sprintf("cluster=%s+%s", mp.InParams["targetClusterProvider"], mp.InParams["targetClusterName"])
-
-	return
+	AppsNameDetails map[string][]AppNameDetails
 }
 
 // GetOrchestratorGrpcEndpoint gRPC endpoint for Orchestrator
@@ -64,54 +53,23 @@ func GetClmEndpoint(mp MigParam) string {
 
 // WatchGrpcEndpoint reads the configuration file to get gRPC Endpoint
 // and makes a connection to watch status notifications.
-func WatchGrpcEndpoint(mp MigParam, args ...string) {
+func WatchGrpcEndpoint(mp MigParam) {
 	var endpoint string
 	var anchor string
 	var reg statusnotifypb.StatusRegistration
 
-	reg.Output = statusnotifypb.OutputType_SUMMARY
+	anchor = buildStatusAnchor(mp.InParams)
+	fmt.Printf("\nCheckReadinessStatus: statusAnchor = %s\n", anchor)
+
+	//fill querry params
+	reg.Output = statusnotifypb.OutputType_ALL
 	reg.StatusType = statusnotifypb.StatusValue_READY
 	reg.Apps = make([]string, 0)
 	reg.Clusters = make([]string, 0)
 	reg.Resources = make([]string, 0)
 
-	for i, arg := range args {
-		if i == 0 {
-			anchor = arg
-			continue
-		}
-		s := strings.Split(arg, "=")
-		if len(s) != 2 {
-			fmt.Errorf("Invalid argument: %s\n", s)
-			return
-		}
-		switch s[0] {
-		case "format":
-			if s[1] == "summary" {
-				reg.Output = statusnotifypb.OutputType_SUMMARY
-			} else if s[1] == "all" {
-				reg.Output = statusnotifypb.OutputType_ALL
-			} else {
-				fmt.Errorf("Invalid output format parameter: %s\n", s[1])
-				return
-			}
-		case "status":
-			if s[1] == "deployed" {
-				reg.StatusType = statusnotifypb.StatusValue_DEPLOYED
-			} else if s[1] == "ready" {
-				reg.StatusType = statusnotifypb.StatusValue_READY
-			} else {
-				fmt.Errorf("Invalid output format parameter: %s\n", s[1])
-				return
-			}
-		case "app":
-			reg.Apps = append(reg.Apps, s[1])
-		case "cluster":
-			reg.Clusters = append(reg.Clusters, s[1])
-		case "resource":
-			reg.Resources = append(reg.Resources, s[1])
-		}
-	}
+	reg.Apps = append(reg.Apps, mp.InParams["targetAppName"])
+	reg.Clusters = append(reg.Clusters, fmt.Sprintf("%s+%s", mp.InParams["targetClusterProvider"], mp.InParams["targetClusterName"]))
 
 	s := strings.Split(anchor, "/")
 	if len(s) < 1 {
@@ -170,6 +128,16 @@ func WatchGrpcEndpoint(mp MigParam, args ...string) {
 			break
 		}
 	}
+}
+
+func buildStatusAnchor(params map[string]string) string {
+	url := "projects/" + params["project"]
+	url += "/composite-apps/" + params["compositeApp"]
+	url += "/" + params["compositeAppVersion"]
+	url += "/deployment-intent-groups/" + params["deploymentIntentGroup"]
+	url += "/status"
+
+	return url
 }
 
 // CreateGrpcClient creates the gRPC Client Connection
