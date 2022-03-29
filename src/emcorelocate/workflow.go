@@ -17,12 +17,10 @@ var NeededParams = []string{ // parameters needed for this workflow
 	"emcoOrchEndpoint", "project", "compositeApp", "compositeAppVersion", "deploymentIntentGroup",
 	"targetClusterProvider", "targetClusterName", "targetAppName"}
 
-// EmcoRelocateWorkflow is a Temporal workflow that relocates selected app of a
-// given deployment intent group (DIG) to a given target cluster in zero down-time mode.
-// It means that new app instance will be in 'ready' STATE before old app instance will be deleted.
-// It expects an "all-activities" parameter inside wfParam.InParams that
-// specifies the common retry/timeout policies for all activities. It may
-// have other activity-specific options on top of that.
+// EmcoRelocateWorkflow is a Temporal workflow that relocates selected app of a given deployment intent group (DIG)
+// to a given target cluster in zero down-time mode. It means that new app instance will be in 'ready' STATE before
+// old app instance will be deleted. It expects an "all-activities" parameter inside wfParam.InParams that specifies
+// the common retry/timeout policies for all activities. It may have other activity-specific options on top of that.
 func EmcoRelocateWorkflow(ctx wf.Context, wfParam *eta.WorkflowParams) (*MigParam, error) {
 	// List all activities for this workflow
 	activityNames := []string{

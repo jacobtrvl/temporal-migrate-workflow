@@ -6,7 +6,6 @@ import (
 	"gitlab.com/project-emco/samples/temporal/migrate-workflow/src/emcorelocate"
 	"log"
 
-	//"encoding/json"
 	"flag"
 	"os"
 
