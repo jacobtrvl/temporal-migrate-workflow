@@ -28,7 +28,6 @@ func EmcoRelocateWorkflow(ctx wf.Context, wfParam *eta.WorkflowParams) (*MigPara
 		"UpdateAppIntents",
 		"DoDigUpdate",
 		"CheckReadinessStatus",
-		"UpdateAppIntents",
 		"DoDigUpdate",
 	}
 
