@@ -3,6 +3,8 @@
 
 # Next Steps
   
-1. Get OpenVPN access to the demo env for Greg and Piotr.
-1. Set up External DNS server.
+1. [All] Get OpenVPN access to the demo env for Greg and Piotr.
+1. [Sundar] Set up dem env, incl. External DNS server.
 1. Enhance the workflow to update the external DNS server upon migration. (The client should not cache the DNS entry.)
+
+1. [Sundar] Check on Intel Poland request.
