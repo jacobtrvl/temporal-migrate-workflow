@@ -19,25 +19,26 @@ Cluster2Label: edge-cluster2
 Cluster2KubeConfig: ../cfg/cluster2.config
 
 # Collectd App
-CollectdAppName: collectd
-CollectdAppFile: ../apps/collectd.tar.gz
-ProfileCollectdAppName: collectd-profile
-ProfileCollectdAppFile: ../apps/collectd_profile.tar.gz
-CollectdAppPlacementIntent: collectd-placement-intent
+AppName: videoserver
+AppHelmChart: ../apps/videoserver.tgz
+AppProfileName: videoserver-profile
+AppProfile: ../apps/videoserver_profile.tgz
+AppPlacementIntent: videoserver-placement-intent
 
 # Workflow Intent
 WfIntentName: dig1-workflow-intent
-WfClientEndpointName: 10.254.185.48
-WfClientEndpointPort: 32321
+WfClientEndpointName: demo-workflowclient.demo.svc.cluster.local
+WfClientEndpointPort: 9090
 WfClientName: relocate_workflowclient
 WfID: relocate-upf-1
 WfTaskQueue: RELOCATE_TASK_Q
-WfEmcoClm: http://10.254.185.70:30461
-WfEmcoOrch: http://10.254.185.70:30415
-WfEmcoOrchStatus: 10.254.185.70:30416
+WfEmcoClm: http://192.168.1.35:30461
+WfEmcoOrch: http://192.168.1.35:30415
+WfEmcoOrchStatus: 192.168.1.35:30416
 
 # Temporal server
-TemporalServerIP: temporaltest-frontend-headless
+TemporalServerIP: 192.168.0.47
+# TemporalServerIP: dev-client
 TemporalServerPort: 7233
 
 # EMCO Controllers

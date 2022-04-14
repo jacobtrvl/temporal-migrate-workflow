@@ -1,25 +1,25 @@
 # EMCO configuration
 orchestrator:
-  host: 10.254.185.70
+  host: 192.168.1.35
   port: 30415
 clm:
-  host: 10.254.185.70
+  host: 192.168.1.35
   port: 30461
 ncm:
-  host: 10.254.185.70
+  host: 192.168.1.35
   port: 30481
 ovnaction:
-  host: 10.254.185.70
+  host: 192.168.1.35
   port: 30451
 dcm:
-  host: 10.254.185.70
+  host: 192.168.1.35
   port: 30477
 gac:
-  host: 10.254.185.70
+  host: 192.168.1.35
   port: 30420
 dtc:
-  host: 10.254.185.70
+  host: 192.168.1.35
   port: 30418
 workflowmgr:
-  host: 10.254.185.70
+  host: 192.168.1.35
   port: 30495

@@ -13,15 +13,15 @@ spec:
   compositeAppVersion: v1
 
 ---
-#adding app collectd to the composite app
+#adding app to the composite app
 version: emco/v2
 resourceContext:
   anchor: projects/{{.ProjectName}}/composite-apps/{{.CompositeApp}}/v1/apps
 metadata :
-  name: {{.CollectdAppName}}
+  name: {{.AppName}}
   description: "description for app"
 file:
-  {{.CollectdAppFile}}
+  {{.AppHelmChart}}
 
 ---
 #creating collection composite profile entry
@@ -33,17 +33,17 @@ metadata :
   description: "test composite profile"
 
 ---
-#adding collectd profiles to the composite profile
+#adding app profiles to the composite profile
 version: emco/v2
 resourceContext:
   anchor: projects/{{.ProjectName}}/composite-apps/{{.CompositeApp}}/v1/composite-profiles/{{.CompositeProfile}}/profiles
 metadata :
-  name: {{.ProfileCollectdAppName}}
-  description: "test collectd profile"
+  name: {{.AppProfileName}}
+  description: "test profile"
 spec:
-  app: {{.CollectdAppName}}
+  app: {{.AppName}}
 file:
-  {{.ProfileCollectdAppFile}}
+  {{.AppProfile}}
 
 ---
 #create deployment intent group
@@ -88,10 +88,10 @@ version: emco/v2
 resourceContext:
   anchor: projects/{{.ProjectName}}/composite-apps/{{.CompositeApp}}/v1/deployment-intent-groups/{{.DeploymentIntent}}/generic-placement-intents/{{.GenericPlacementIntent}}/app-intents
 metadata:
-  name: {{.CollectdAppPlacementIntent}}
+  name: {{.AppPlacementIntent}}
   description: "description of placement intent"
 spec:
-  app: {{.CollectdAppName}}
+  app: {{.AppName}}
   intent:
     allOf:
     - clusterProvider: {{.ClusterProvider1}}
