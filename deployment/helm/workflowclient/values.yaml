@@ -2,16 +2,18 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-temporalServer: 192.168.0.33
+temporalServerIp: "10.254.185.48"
+temporalServerPort: "32155"
+
 containerPort: 9090
 
 replicaCount: 1
 
 image:
-  repository: "registry.gitlab.com/project-emco/ecosystem/temporal-migrate-workflow/migrate-workflow-client"
-  pullPolicy: IfNotPresent
+  repository: "pmatysiaq/workflow-client"
+  pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "sundar-latest"
+  tag: "latest"
 
 imagePullSecrets: []
 nameOverride: ""

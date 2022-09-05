@@ -65,7 +65,7 @@ func WatchGrpcEndpoint(mp MigParam) {
 	fmt.Printf("\nCheckReadinessStatus: statusAnchor = %s\n", anchor)
 
 	// fill query params
-	reg.Output = statusnotifypb.OutputType_ALL
+	reg.Output = statusnotifypb.OutputType_SUMMARY
 	reg.StatusType = statusnotifypb.StatusValue_READY
 	reg.Apps = make([]string, 0)
 	reg.Clusters = make([]string, 0)
@@ -74,6 +74,9 @@ func WatchGrpcEndpoint(mp MigParam) {
 	reg.Apps = append(reg.Apps, mp.InParams["targetAppName"])
 	reg.Clusters = append(reg.Clusters,
 		fmt.Sprintf("%s+%s", mp.InParams["targetClusterProvider"], mp.InParams["targetClusterName"]))
+
+	reg.Resources = append(reg.Resources, "apps.v1.Deployment", "apps.v1.StatefulSet", "apps.v1.DaemonSet",
+		"apps.v1.ReplicaSet", "batch.v1.Job", "v1.Pod")
 
 	s := strings.Split(anchor, "/")
 	if len(s) < 1 {

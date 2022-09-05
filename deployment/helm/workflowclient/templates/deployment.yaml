@@ -34,8 +34,10 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: TEMPORAL_SERVER
-              value: {{ .Values.temporalServer }}
+            - name: TEMPORAL_SERVER_IP
+              value: "{{ .Values.temporalServerIp }}"
+            - name: TEMPORAL_SERVER_PORT
+              value: "{{ .Values.temporalServerPort }}"
           ports:
             - name: http
               containerPort: {{ .Values.containerPort }}

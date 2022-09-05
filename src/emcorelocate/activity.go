@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 // TODO REVISIT Copied from EMCO as import leads to conflicts
@@ -251,5 +252,6 @@ func DoDigUpdate(ctx context.Context, migParam MigParam) (*MigParam, error) {
 func CheckReadinessStatus(ctx context.Context, migParam MigParam) (*MigParam, error) {
 
 	WatchGrpcEndpoint(migParam)
+	time.Sleep(1 * time.Second)
 	return &migParam, nil
 }

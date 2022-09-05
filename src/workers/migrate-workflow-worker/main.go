@@ -15,18 +15,26 @@ import (
 )
 
 const (
-	temporal_env_var = "TEMPORAL_SERVER"
-	temporal_port    = "7233"
+	TemporalIpEnvVar   = "TEMPORAL_SERVER_IP"
+	temporalPortEnvVar = "TEMPORAL_SERVER_PORT" // 7233
 )
 
 func main() {
 	// Get the Temporal Server's IP
-	temporal_server := os.Getenv(temporal_env_var)
-	if temporal_server == "" {
-		fmt.Fprintf(os.Stderr, "Error: Need to define $TEMPORAL_SERVER\n")
+	temporalServerIp := os.Getenv(TemporalIpEnvVar)
+	if temporalServerIp == "" {
+		fmt.Fprintf(os.Stderr, "Error: Need to define $TEMPORAL_SERVER_IP\n")
 		os.Exit(1)
 	}
-	hostPort := temporal_server + ":" + temporal_port
+
+	// Get the TemporalServer's Port
+	temporalServerPort := os.Getenv(temporalPortEnvVar)
+	if temporalServerPort == "" {
+		fmt.Fprintf(os.Stderr, "Error: Need to define $TEMPORAL_SERVER_PORT\n")
+		os.Exit(1)
+	}
+
+	hostPort := temporalServerIp + ":" + temporalServerPort
 	fmt.Printf("Temporal server endpoint: (%s)\n", hostPort)
 
 	// Create the client object just once per process
