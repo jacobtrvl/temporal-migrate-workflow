@@ -1,6 +1,6 @@
 ```
 SPDX-License-Identifier: Apache-2.0
-Copyright (c) 2022 Intel Corporation
+Copyright (c) 2022 Intel Corporation, Orange S.A.
 ```
 
 # Sample Temporal Workflow For EMCO
@@ -28,3 +28,24 @@ NOTE: EMCO-Temporal integration in `emco-base` is WIP. Till that completes,
   $ cd .. # change PWD to parent directory of temporal-migrate-workflow repo.
   $ git clone https://gitlab.com/project-emco/core/emco-base.git -b emco-temporal
   ```
+
+# Edge Relocation
+
+`Relocate-Workflow` is designed as Temporal Workflow, which make use of EMCO APIs to perform E2E application relocation 
+in a seamless way. Ultimately, `Relocate-Workflow` should allow `zero-down-time` relocation.
+
+## Problem statement
+
+The user (UE) is consuming a service, while moving out of the coverage area of Source MEC Host (Edge Server / `Cluster A`). Later user enters the coverage area of Target MEC (Edge Server / `Cluster B`) and expects to resume the same service. This requires a relocation of a service instance from `Cluster A` to `Cluster B`
+
+## Major requirements
+
+- Service continuity must be assured to the UE;
+- The new instance of the application must be declared to be 'ready’ before we can steer the trafic to the new app instance;
+- If there are several candidates for the target MEC cluster, the final choice should be made by MEC Orchestrator.
+
+## 3 step to make end-to-end Edge Relocation happend
+
+1. UE monitoring
+2. Decision about relocation
+3. **Perform Edge Relocation with Zero Downtime (`Relocate-Workflow`)**
