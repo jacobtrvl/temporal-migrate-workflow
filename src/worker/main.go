@@ -37,6 +37,20 @@ func main() {
 		log.Fatalln("unable to create Temporal client", err)
 	}
 	defer c.Close()
+
+	// Create worker for DU migration
+	w1 := worker.New(c, nvidiawf.NwfTaskQueue, worker.Options{})
+	w1.RegisterWorkflow(nvidiawf.NvidiaWorkflow)
+	w1.RegisterActivity(nvidiawf.DoDigApprove)
+	w1.RegisterActivity(nvidiawf.DoDigInstantiate)
+	w1.RegisterActivity(nvidiawf.DoDigTerminate)
+
+	err = w1.Run(worker.InterruptCh())
+	if err != nil {
+		log.Fatalln("unable to start nvidia worder", err)
+	}
+	fmt.Printf("Nv WF started : (%s)\n", hostPort)
+
 	// This worker hosts both Workflow and Activity functions
 	w := worker.New(c, emcomigrate.MigTaskQueue, worker.Options{})
 	w.RegisterWorkflow(emcomigrate.EmcoMigrateWorkflow)
@@ -50,14 +64,4 @@ func main() {
 		log.Fatalln("unable to start Worker", err)
 	}
 
-	// Create worker for DU migration
-	w1 := worker.New(c, nvidiawf.NwfTaskQueue, worker.Options{})
-	w1.RegisterWorkflow(nvidiawf.NvidiaWorkflow)
-	w1.RegisterActivity(nvidiawf.DoDigInstantiate)
-	w1.RegisterActivity(nvidiawf.DoDigTerminate)
-
-	err = w.Run(worker.InterruptCh())
-	if err != nil {
-		log.Fatalln("unable to start nvidia worder", err)
-	}
 }

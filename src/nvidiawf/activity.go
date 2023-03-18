@@ -31,11 +31,38 @@ func buildDig1URL(params map[string]string) string {
 	return url
 }
 
+// DoDigApprove calls EMCO's /instantiate API
+func DoDigApprove(ctx context.Context, params NwfParam) (*NwfParam, error) {
+
+	// POST dig update operation
+	fmt.Printf("Approve XXXXXXXXX: migParam = %#v\n", params.InParams)
+	digURL := buildDigURL(params.InParams)
+	digInstantiateURL := digURL + "/approve"
+	resp, err := http.Post(digInstantiateURL, "", nil)
+	if err != nil {
+		postErr := fmt.Errorf("HTTP POST failed for URL %s.\nError: %s\n",
+			digInstantiateURL, err)
+		fmt.Fprintf(os.Stderr, postErr.Error())
+		return nil, postErr
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusAccepted {
+		postErr := fmt.Errorf("HTTP POST returned status code %s for URL %s.\n",
+			resp.Status, digInstantiateURL)
+		fmt.Fprintf(os.Stderr, postErr.Error())
+		return nil, postErr
+	}
+
+	return &params, nil
+}
+
 // DoDigInstantiate calls EMCO's /instantiate API
 func DoDigInstantiate(ctx context.Context, params NwfParam) (*NwfParam, error) {
 
 	// POST dig update operation
-	digURL := buildDigURL(NwfParam{}.InParams)
+	fmt.Printf("XXXXXXXXX: migParam = %#v\n", params.InParams)
+	digURL := buildDigURL(params.InParams)
 	digInstantiateURL := digURL + "/instantiate"
 	resp, err := http.Post(digInstantiateURL, "", nil)
 	if err != nil {
@@ -60,7 +87,7 @@ func DoDigInstantiate(ctx context.Context, params NwfParam) (*NwfParam, error) {
 func DoDigTerminate(ctx context.Context, params NwfParam) (*NwfParam, error) {
 
 	// POST dig update operation
-	digURL := buildDig1URL(NwfParam{}.InParams)
+	digURL := buildDig1URL(params.InParams)
 	digTerminateURL := digURL + "/terminate"
 	resp, err := http.Post(digTerminateURL, "", nil)
 	if err != nil {

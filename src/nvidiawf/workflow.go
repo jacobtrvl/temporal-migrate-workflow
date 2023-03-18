@@ -25,6 +25,7 @@ var NeededParams = []string{ // parameters needed for this workflow
 func NvidiaWorkflow(ctx wf.Context, wfParam *eta.WorkflowParams) (*NwfParam, error) {
 	// List all activities for this workflow
 	activityNames := []string{
+		"DoDigApprove",
 		"DoDigInstantiate",
 		"DoDigTerminate",
 	}
@@ -47,6 +48,7 @@ func NvidiaWorkflow(ctx wf.Context, wfParam *eta.WorkflowParams) (*NwfParam, err
 		fmt.Fprintf(os.Stderr, err.Error())
 		return nil, err
 	}
+	fmt.Printf("NvidiaWorkflow: got activity params %#v\n", all_activities_params)
 
 	if err := validateParams(all_activities_params); err != nil {
 		return nil, err
@@ -67,10 +69,20 @@ func NvidiaWorkflow(ctx wf.Context, wfParam *eta.WorkflowParams) (*NwfParam, err
 	}
 
 	params := NwfParam{InParams: all_activities_params}
+	fmt.Printf("NvidiaWorkflow: params %#v\n", params)
+
+	currentState = "DoDigApprovee"
+	ctx1 := ctxMap["DoDigApprove"]
+	err = wf.ExecuteActivity(ctx1, DoDigApprove, params).Get(ctx1, &params)
+	if err != nil {
+		wferr := fmt.Errorf("DoDigApprove failed: %s", err.Error())
+		fmt.Fprintf(os.Stderr, wferr.Error())
+		return nil, wferr
+	}
 
 	currentState = "DoDigInstantiate"
-	ctx1 := ctxMap["DoDigInstantiate"]
-	err = wf.ExecuteActivity(ctx1, DoDigInstantiate, params).Get(ctx1, &params)
+	ctx2 := ctxMap["DoDigInstantiate"]
+	err = wf.ExecuteActivity(ctx2, DoDigInstantiate, params).Get(ctx2, &params)
 	if err != nil {
 		wferr := fmt.Errorf("DoDigInstantiate failed: %s", err.Error())
 		fmt.Fprintf(os.Stderr, wferr.Error())
@@ -78,8 +90,8 @@ func NvidiaWorkflow(ctx wf.Context, wfParam *eta.WorkflowParams) (*NwfParam, err
 	}
 
 	currentState = "DoDigTerminate"
-	ctx2 := ctxMap["DoDigTerminate"]
-	err = wf.ExecuteActivity(ctx2, DoDigTerminate, params).Get(ctx2, &params)
+	ctx3 := ctxMap["DoDigTerminate"]
+	err = wf.ExecuteActivity(ctx3, DoDigTerminate, params).Get(ctx3, &params)
 	if err != nil {
 		wferr := fmt.Errorf("DoDigTerminate failed: %s", err.Error())
 		fmt.Fprintf(os.Stderr, wferr.Error())
@@ -163,6 +175,7 @@ func validateParams(inParams map[string]string) error {
 		fmt.Fprintf(os.Stderr, err.Error())
 		return err
 	}
+	fmt.Printf("NvidiaWorkflow: inparams %#v\n", inParams)
 
 	return nil
 }
