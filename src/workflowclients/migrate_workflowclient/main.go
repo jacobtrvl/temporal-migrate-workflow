@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"gitlab.com/project-emco/samples/temporal/migrate-workflow/src/nvidiawf"
 	"log"
 
 	//"encoding/json"
@@ -12,7 +13,6 @@ import (
 	"go.temporal.io/sdk/client"
 
 	eta "gitlab.com/project-emco/core/emco-base/src/workflowmgr/pkg/emcotemporalapi"
-	"gitlab.com/project-emco/samples/temporal/migrate-workflow/src/emcomigrate"
 )
 
 const (
@@ -44,7 +44,7 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Quitting due to errors.\n")
 	}
-	spec.WfStartOpts.TaskQueue = emcomigrate.MigTaskQueue //override task queue
+	spec.WfStartOpts.TaskQueue = nvidiawf.NwfTaskQueue //override task queue
 
 	// Create the client object just once per process
 	clientOptions := client.Options{HostPort: hostPort}
@@ -58,7 +58,7 @@ func main() {
 	options := client.StartWorkflowOptions(spec.WfStartOpts)
 	//migParam := emcomigrate.MigParam{Name: "Ganesha"}
 	we, err := c.ExecuteWorkflow(context.Background(), options,
-		emcomigrate.EmcoMigrateWorkflow, &spec.WfParams)
+		nvidiawf.NvidiaWorkflow, &spec.WfParams)
 	if err != nil {
 		log.Fatalln("error starting Migration Workflow", err)
 	}

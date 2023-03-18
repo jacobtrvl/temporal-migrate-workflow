@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"gitlab.com/project-emco/samples/temporal/migrate-workflow/src/nvidiawf"
 	"log"
 	"os"
 
@@ -47,5 +48,16 @@ func main() {
 	err = w.Run(worker.InterruptCh())
 	if err != nil {
 		log.Fatalln("unable to start Worker", err)
+	}
+
+	// Create worker for DU migration
+	w1 := worker.New(c, nvidiawf.NwfTaskQueue, worker.Options{})
+	w1.RegisterWorkflow(nvidiawf.NvidiaWorkflow)
+	w1.RegisterActivity(nvidiawf.DoDigInstantiate)
+	w1.RegisterActivity(nvidiawf.DoDigTerminate)
+
+	err = w.Run(worker.InterruptCh())
+	if err != nil {
+		log.Fatalln("unable to start nvidia worder", err)
 	}
 }

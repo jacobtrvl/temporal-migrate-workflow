@@ -5,8 +5,8 @@ go 1.16
 require (
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
-	gitlab.com/project-emco/core/emco-base/src/workflowmgr v0.0.0-00010101000000-000000000000
-	go.temporal.io/sdk v1.13.1
+	gitlab.com/project-emco/core/emco-base/src/workflowmgr v0.0.0-20221213073359-591fb7a56f90
+	go.temporal.io/sdk v1.21.1
 )
 
 replace (
