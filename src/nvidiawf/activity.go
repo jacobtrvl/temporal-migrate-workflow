@@ -5,16 +5,83 @@ package nvidiawf
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
+
+type digActions struct {
+	State    string    `json:"state"`
+	Instance string    `json:"instance"`
+	Time     time.Time `json:"time"`
+	Revision int       `json:"revision"`
+}
+type AppsStatus struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Clusters    []struct {
+		ClusterProvider string `json:"clusterProvider"`
+		Cluster         string `json:"cluster"`
+		Connectivity    string `json:"connectivity"`
+		Resources       []struct {
+			GVK struct {
+				Group   string `json:"Group"`
+				Version string `json:"Version"`
+				Kind    string `json:"Kind"`
+			} `json:"GVK"`
+			Name string `json:"name"`
+			//RsyncStatus    string `json:"rsyncStatus,omitempty"`
+			//ClusterStatus  string `json:"clusterStatus,omitempty"`
+			DeployedStatus string `json:"deployedStatus"`
+			ReadyStatus    string `json:"readyStatus"`
+		} `json:"resources"`
+	} `json:"clusters"`
+}
+
+type digStatus struct {
+	Project              string `json:"project"`
+	CompositeAppName     string `json:"compositeApp"`
+	CompositeAppVersion  string `json:"compositeAppVersion"`
+	CompositeProfileName string `json:"compositeProfile"`
+	Name                 string `json:"name"`
+	States               struct {
+		Actions []digActions `json:"actions"`
+	} `json:"states"`
+	ReadyStatus    string `json:"readyStatus,omitempty"`
+	DeployedStatus string `json:"deployedStatus"`
+	//RsyncStatus    struct {
+	// Deleted int `json:"Deleted,omitempty"`
+	//} `json:"rsyncStatus,omitempty"`
+	DeployedCounts struct {
+		Applied int `json:"Applied"`
+	} `json:"deployedCounts"`
+	//ClusterStatus struct {
+	// NotReady int `json:"NotReady,omitempty"`
+	// Ready    int `json:"Ready,omitempty"`
+	//} `json:"clusterStatus,omitempty"`
+	Apps          []AppsStatus `json:"apps,omitempty"`
+	IsCheckedOut  bool         `json:"isCheckedOut"`
+	TargetVersion string       `json:"targetVersion"`
+	DigId         string       `json:"digId,omitempty"`
+}
 
 func buildDigURL(params map[string]string) string {
 	url := params["emcoURL"]
 	url += "/v2/projects/" + params["project"]
+	url += "/composite-apps/" + params["compositeApp"]
+	url += "/" + params["compositeAppVersion"]
+	url += "/deployment-intent-groups/" + params["deploymentIntentGroup"]
+
+	return url
+}
+
+func buildMiddleendURL(params map[string]string) string {
+	url := params["middleendURL"]
+	url += "/projects/" + params["project"]
 	url += "/composite-apps/" + params["compositeApp"]
 	url += "/" + params["compositeAppVersion"]
 	url += "/deployment-intent-groups/" + params["deploymentIntentGroup"]
@@ -107,20 +174,40 @@ func DoDigTerminate(ctx context.Context, params NwfParam) (*NwfParam, error) {
 	return &params, nil
 }
 
-// func getHttpRespBody(url string) (io.ReadCloser, error) {
-func getHttpRespBody(url string) ([]byte, error) {
-	resp, err := http.Get(url)
+// DoSwitchConfig does remote switch config
+func DoSwitchConfig(ctx context.Context, params NwfParam) (*NwfParam, error) {
+	sshClientURL := params.InParams["sshClientURL"] + "/execute"
+	resp, err := http.Post(sshClientURL, "", nil)
 	if err != nil {
-		getErr := fmt.Errorf("HTTP GET failed for URL %s.\nError: %s\n",
-			url, err)
-		fmt.Fprintf(os.Stderr, getErr.Error())
-		return nil, getErr
+		postErr := fmt.Errorf("HTTP POST failed for URL %s.\nError: %s\n",
+			sshClientURL, err)
+		fmt.Fprintf(os.Stderr, postErr.Error())
+		return nil, postErr
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		postErr := fmt.Errorf("HTTP POST returned status code %s for URL %s.\n",
+			resp.Status, sshClientURL)
+		fmt.Fprintf(os.Stderr, postErr.Error())
+		return nil, postErr
+	}
+	return &params, nil
+}
+
+func GetInstantiateStatus(ctx context.Context, params NwfParam) (*NwfParam, error) {
+	middleendURL := buildMiddleendURL(params.InParams) + "/status"
+	resp, err := http.Get(middleendURL)
+	if err != nil {
+		postErr := fmt.Errorf("HTTP POST failed for URL %s.\nError: %s\n",
+			middleendURL, err)
+		fmt.Fprintf(os.Stderr, postErr.Error())
+		return nil, postErr
+	}
+
+	if resp.StatusCode != http.StatusOK {
 		getErr := fmt.Errorf("HTTP GET returned status code %s for URL %s.\n",
-			resp.Status, url)
+			resp.Status, middleendURL)
 		fmt.Fprintf(os.Stderr, getErr.Error())
 		return nil, getErr
 	}
@@ -129,6 +216,13 @@ func getHttpRespBody(url string) ([]byte, error) {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	status := digStatus{}
+	err = json.Unmarshal(b, &status)
+	if err != nil {
+		Err := fmt.Errorf("Failedto unmarashal.\nError: %s\n", err)
+		fmt.Fprintf(os.Stderr, Err.Error())
+	}
+	fmt.Printf(status.ReadyStatus)
 
-	return b, nil
+	return &params, nil
 }

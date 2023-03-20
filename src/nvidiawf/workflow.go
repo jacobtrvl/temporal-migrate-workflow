@@ -28,6 +28,8 @@ func NvidiaWorkflow(ctx wf.Context, wfParam *eta.WorkflowParams) (*NwfParam, err
 		"DoDigApprove",
 		"DoDigInstantiate",
 		"DoDigTerminate",
+		"GetInstantiateStatus",
+		"DoSwitchConfig",
 	}
 
 	// Set current state and define workflow queries
@@ -97,6 +99,24 @@ func NvidiaWorkflow(ctx wf.Context, wfParam *eta.WorkflowParams) (*NwfParam, err
 		fmt.Fprintf(os.Stderr, wferr.Error())
 		return nil, wferr
 	}
+
+	currentState = "GetInstantiateStatus"
+	ctx4 := ctxMap["GetInstantiateStatus"]
+	err = wf.ExecuteActivity(ctx4, GetInstantiateStatus, params).Get(ctx4, &params)
+	if err != nil {
+		wferr := fmt.Errorf("GetInstantiateStatus failed: %s", err.Error())
+		fmt.Fprintf(os.Stderr, wferr.Error())
+		return nil, wferr
+	}
+	currentState = "DoSwitchConfig"
+	ctx5 := ctxMap["DoSwitchConfig"]
+	err = wf.ExecuteActivity(ctx5, DoSwitchConfig, params).Get(ctx5, &params)
+	if err != nil {
+		wferr := fmt.Errorf("DoSwitchConfig failed: %s", err.Error())
+		fmt.Fprintf(os.Stderr, wferr.Error())
+		return nil, wferr
+	}
+
 	currentState = "completed"
 
 	fmt.Printf("After all activities: migParam = %#v\n", params)
