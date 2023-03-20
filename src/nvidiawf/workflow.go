@@ -108,6 +108,7 @@ func NvidiaWorkflow(ctx wf.Context, wfParam *eta.WorkflowParams) (*NwfParam, err
 		fmt.Fprintf(os.Stderr, wferr.Error())
 		return nil, wferr
 	}
+
 	currentState = "DoSwitchConfig"
 	ctx5 := ctxMap["DoSwitchConfig"]
 	err = wf.ExecuteActivity(ctx5, DoSwitchConfig, params).Get(ctx5, &params)

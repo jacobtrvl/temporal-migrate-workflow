@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "name": "nvidia-workflow-intent-new",
+    "description": "description for intent"
+  },
+  "spec": {
+    "workflowClient": {
+      "clientEndpointName": "demo-workflowclient.demo.svc.cluster.local",
+      "clientEndpointPort": 9090
+    },
+    "temporal": {
+      "workflowClientName": "migrate_workflowclient",
+      "workflowStartOptions": {
+        "id": "migrate-apps-1",
+        "taskQueue": "NVIDIA_TASK_Q",
+        "retryPolicy": {
+          "maximumAttempts": 2
+        }
+      },
+      "workflowParams": {
+        "activityOptions": {
+          "all-activities": {
+            "startToCloseTimeout": 60000000000,
+            "heartbeatTimeout": 5000000,
+            "retryPolicy": {
+              "initialInterval": 10
+            }
+          }
+        },
+        "activityParams": {
+          "all-activities": {
+            "emcoURL": "http://orchestrator.emco.svc.cluster.local:9015",
+            "middleendURL": "http://middleend.emco.svc.cluster.local:9051",
+            "project": "proj1",
+            "compositeApp": "capp1",
+            "compositeAppVersion": "v1",
+            "deploymentIntentGroup": "dig1",
+            "compositeApp1": "capp1",
+            "compositeAppVersion1": "v1",
+            "deploymentIntentGroup1": "dig2"
+          }
+        }
+      }
+    }
+  }
+  }

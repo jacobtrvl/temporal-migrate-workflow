@@ -81,10 +81,10 @@ func buildDigURL(params map[string]string) string {
 
 func buildMiddleendURL(params map[string]string) string {
 	url := params["middleendURL"]
-	url += "/projects/" + params["project"]
-	url += "/composite-apps/" + params["compositeApp"]
-	url += "/" + params["compositeAppVersion"]
-	url += "/deployment-intent-groups/" + params["deploymentIntentGroup"]
+	url += "/middleend/projects/" + params["project"]
+	url += "/composite-apps/" + params["compositeApp1"]
+	url += "/" + params["compositeAppVersion1"]
+	url += "/deployment-intent-groups/" + params["deploymentIntentGroup1"]
 
 	return url
 }
@@ -103,7 +103,7 @@ func DoDigApprove(ctx context.Context, params NwfParam) (*NwfParam, error) {
 
 	// POST dig update operation
 	fmt.Printf("Approve XXXXXXXXX: migParam = %#v\n", params.InParams)
-	digURL := buildDigURL(params.InParams)
+	digURL := buildDig1URL(params.InParams)
 	digInstantiateURL := digURL + "/approve"
 	resp, err := http.Post(digInstantiateURL, "", nil)
 	if err != nil {
@@ -129,7 +129,7 @@ func DoDigInstantiate(ctx context.Context, params NwfParam) (*NwfParam, error) {
 
 	// POST dig update operation
 	fmt.Printf("XXXXXXXXX: migParam = %#v\n", params.InParams)
-	digURL := buildDigURL(params.InParams)
+	digURL := buildDig1URL(params.InParams)
 	digInstantiateURL := digURL + "/instantiate"
 	resp, err := http.Post(digInstantiateURL, "", nil)
 	if err != nil {
@@ -154,7 +154,7 @@ func DoDigInstantiate(ctx context.Context, params NwfParam) (*NwfParam, error) {
 func DoDigTerminate(ctx context.Context, params NwfParam) (*NwfParam, error) {
 
 	// POST dig update operation
-	digURL := buildDig1URL(params.InParams)
+	digURL := buildDigURL(params.InParams)
 	digTerminateURL := digURL + "/terminate"
 	resp, err := http.Post(digTerminateURL, "", nil)
 	if err != nil {
@@ -197,6 +197,7 @@ func DoSwitchConfig(ctx context.Context, params NwfParam) (*NwfParam, error) {
 
 func GetInstantiateStatus(ctx context.Context, params NwfParam) (*NwfParam, error) {
 	middleendURL := buildMiddleendURL(params.InParams) + "/status"
+	fmt.Printf("YYYYY : status = %#s\n", middleendURL)
 	resp, err := http.Get(middleendURL)
 	if err != nil {
 		postErr := fmt.Errorf("HTTP POST failed for URL %s.\nError: %s\n",
@@ -222,7 +223,12 @@ func GetInstantiateStatus(ctx context.Context, params NwfParam) (*NwfParam, erro
 		Err := fmt.Errorf("Failedto unmarashal.\nError: %s\n", err)
 		fmt.Fprintf(os.Stderr, Err.Error())
 	}
-	fmt.Printf(status.ReadyStatus)
+	fmt.Printf("YYYYYXXXXX %s\n",status.ReadyStatus)
+	if status.ReadyStatus != "Ready" {
+		err2 := fmt.Errorf("the DU is still not ready %g", status.ReadyStatus)
+		fmt.Fprintf(os.Stderr, err2.Error())
+		return nil, err2 
+	}
 
 	return &params, nil
 }

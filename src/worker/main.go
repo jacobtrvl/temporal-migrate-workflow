@@ -44,6 +44,8 @@ func main() {
 	w1.RegisterActivity(nvidiawf.DoDigApprove)
 	w1.RegisterActivity(nvidiawf.DoDigInstantiate)
 	w1.RegisterActivity(nvidiawf.DoDigTerminate)
+	w1.RegisterActivity(nvidiawf.GetInstantiateStatus)
+	w1.RegisterActivity(nvidiawf.DoSwitchConfig)
 
 	err = w1.Run(worker.InterruptCh())
 	if err != nil {
