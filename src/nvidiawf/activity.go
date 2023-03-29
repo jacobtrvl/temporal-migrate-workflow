@@ -119,6 +119,8 @@ func buildMECDigURL(params map[string]string) string {
 }
 
 func getDigStatus(middleendURL string, statusType string) (string, error) {
+
+	fmt.Printf("GET DIG STATUS XXXXXXXXX: migParam = %s\n", middleendURL)
 	resp, err := http.Get(middleendURL)
 	if err != nil {
 		postErr := fmt.Errorf("HTTP POST failed for URL %s.\nError: %s\n",
@@ -146,19 +148,20 @@ func getDigStatus(middleendURL string, statusType string) (string, error) {
 	}
 
 	if statusType == "deployed" {
+	        fmt.Printf("GOT DIG STATUS XXXXXXXXX: migParam = %s\n", status.DeployedStatus)
 		return status.DeployedStatus, nil
 	} else {
+	        fmt.Printf("GOT DIG STATUS XXXXXXXXX: migParam = %s\n", status.ReadyStatus)
 		return status.ReadyStatus, nil
 	}
 }
-
 // DoDigApprove calls EMCO's /instantiate API
 func DoDigApprove(ctx context.Context, params NwfParam) (*NwfParam, error) {
 	var digURL = ""
 	var middleendURL = ""
 
 	// POST dig update operation
-	fmt.Printf("Approve XXXXXXXXX: migParam = %#v\n", params.InParams)
+	fmt.Printf("Approve XXXXXXXXX: = %s\n", params.App)
 
 	if params.App == "MEC" {
 		digURL = buildMECDigURL(params.InParams)
@@ -176,8 +179,8 @@ func DoDigApprove(ctx context.Context, params NwfParam) (*NwfParam, error) {
 		params.mu.Unlock()
 		return nil, err
 	}
-	if status == "Approved" {
-		fmt.Printf("DIG in Approved state already: %s", middleendURL)
+	if (status == "Approved" || status == "Instantiated") {
+		fmt.Printf("DIG in Approved/Instantiated state already: %s", middleendURL)
 		params.mu.Unlock()
 		return &params, nil
 	}
@@ -211,7 +214,7 @@ func DoDigInstantiate(ctx context.Context, params NwfParam) (*NwfParam, error) {
 	var middleendURL = ""
 
 	// POST dig update operation
-	fmt.Printf("XXXXXXXXX: migParam = %#v\n", params.InParams)
+	fmt.Printf("XXXXXXXXX: INSTANTIATE = %s\n", params.App)
 
 	if params.App == "MEC" {
 		digURL = buildMECDigURL(params.InParams)
@@ -262,6 +265,7 @@ func DoDigInstantiate(ctx context.Context, params NwfParam) (*NwfParam, error) {
 func DoDigTerminate(ctx context.Context, params NwfParam) (*NwfParam, error) {
 
 	// POST dig update operation
+	fmt.Printf("XXXXXXXXX: TERMINATE = %s\n", params.App)
 	digURL := buildDigURL(params.InParams)
 	digTerminateURL := digURL + "/terminate"
 	resp, err := http.Post(digTerminateURL, "", nil)
@@ -284,7 +288,7 @@ func DoDigTerminate(ctx context.Context, params NwfParam) (*NwfParam, error) {
 
 // DoSwitchConfig does remote switch config
 func DoSwitchConfig(ctx context.Context, params NwfParam) (*NwfParam, error) {
-	sshClientURL := params.InParams["sshClientURL"] + "/execute"
+	sshClientURL := params.InParams["sshclientURL"] + "/execute"
 	resp, err := http.Post(sshClientURL, "", nil)
 	if err != nil {
 		postErr := fmt.Errorf("HTTP POST failed for URL %s.\nError: %s\n",
