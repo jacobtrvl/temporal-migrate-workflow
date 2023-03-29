@@ -3,8 +3,12 @@
 
 package nvidiawf
 
+import "sync"
+
 const NwfTaskQueue = "NVIDIAWF_TASK_Q"
 
 type NwfParam struct {
 	InParams map[string]string
+	App      string
+	mu       sync.Mutex
 }

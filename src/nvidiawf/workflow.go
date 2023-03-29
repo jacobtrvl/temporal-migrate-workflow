@@ -27,9 +27,9 @@ func NvidiaWorkflow(ctx wf.Context, wfParam *eta.WorkflowParams) (*NwfParam, err
 	activityNames := []string{
 		"DoDigApprove",
 		"DoDigInstantiate",
-		"DoDigTerminate",
 		"GetInstantiateStatus",
 		"DoSwitchConfig",
+		"DoDigTerminate",
 	}
 
 	// Set current state and define workflow queries
@@ -72,8 +72,9 @@ func NvidiaWorkflow(ctx wf.Context, wfParam *eta.WorkflowParams) (*NwfParam, err
 
 	params := NwfParam{InParams: all_activities_params}
 	fmt.Printf("NvidiaWorkflow: params %#v\n", params)
+	params.App = "5GC"
 
-	currentState = "DoDigApprovee"
+	currentState = "DoDigApprove"
 	ctx1 := ctxMap["DoDigApprove"]
 	err = wf.ExecuteActivity(ctx1, DoDigApprove, params).Get(ctx1, &params)
 	if err != nil {
@@ -87,15 +88,6 @@ func NvidiaWorkflow(ctx wf.Context, wfParam *eta.WorkflowParams) (*NwfParam, err
 	err = wf.ExecuteActivity(ctx2, DoDigInstantiate, params).Get(ctx2, &params)
 	if err != nil {
 		wferr := fmt.Errorf("DoDigInstantiate failed: %s", err.Error())
-		fmt.Fprintf(os.Stderr, wferr.Error())
-		return nil, wferr
-	}
-
-	currentState = "DoDigTerminate"
-	ctx3 := ctxMap["DoDigTerminate"]
-	err = wf.ExecuteActivity(ctx3, DoDigTerminate, params).Get(ctx3, &params)
-	if err != nil {
-		wferr := fmt.Errorf("DoDigTerminate failed: %s", err.Error())
 		fmt.Fprintf(os.Stderr, wferr.Error())
 		return nil, wferr
 	}
@@ -114,6 +106,34 @@ func NvidiaWorkflow(ctx wf.Context, wfParam *eta.WorkflowParams) (*NwfParam, err
 	err = wf.ExecuteActivity(ctx5, DoSwitchConfig, params).Get(ctx5, &params)
 	if err != nil {
 		wferr := fmt.Errorf("DoSwitchConfig failed: %s", err.Error())
+		fmt.Fprintf(os.Stderr, wferr.Error())
+		return nil, wferr
+	}
+
+	currentState = "DoDigTerminate"
+	ctx3 := ctxMap["DoDigTerminate"]
+	err = wf.ExecuteActivity(ctx3, DoDigTerminate, params).Get(ctx3, &params)
+	if err != nil {
+		wferr := fmt.Errorf("DoDigTerminate failed: %s", err.Error())
+		fmt.Fprintf(os.Stderr, wferr.Error())
+		return nil, wferr
+	}
+
+	params.App = "MEC"
+	currentState = "DoDigApprovee"
+	ctx6 := ctxMap["DoDigApprove"]
+	err = wf.ExecuteActivity(ctx1, DoDigApprove, params).Get(ctx6, &params)
+	if err != nil {
+		wferr := fmt.Errorf("DoDigApprove failed: %s", err.Error())
+		fmt.Fprintf(os.Stderr, wferr.Error())
+		return nil, wferr
+	}
+
+	currentState = "DoDigInstantiate"
+	ctx7 := ctxMap["DoDigInstantiate"]
+	err = wf.ExecuteActivity(ctx2, DoDigInstantiate, params).Get(ctx7, &params)
+	if err != nil {
+		wferr := fmt.Errorf("DoDigInstantiate failed: %s", err.Error())
 		fmt.Fprintf(os.Stderr, wferr.Error())
 		return nil, wferr
 	}

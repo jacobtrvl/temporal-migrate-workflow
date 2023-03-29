@@ -88,6 +88,16 @@ func buildMiddleendURL(params map[string]string) string {
 
 	return url
 }
+func buildMiddleendMECURL(params map[string]string) string {
+	url := params["middleendURL"]
+	url += "/middleend/projects/" + params["project"]
+	url += "/composite-apps/" + params["mecApp"]
+	url += "/" + params["mecAppVersion"]
+	url += "/deployment-intent-groups/" + params["mecAppDig"]
+
+	return url
+}
+
 func buildDig1URL(params map[string]string) string {
 	url := params["emcoURL"]
 	url += "/v2/projects/" + params["project"]
@@ -98,18 +108,87 @@ func buildDig1URL(params map[string]string) string {
 	return url
 }
 
+func buildMECDigURL(params map[string]string) string {
+	url := params["emcoURL"]
+	url += "/v2/projects/" + params["project"]
+	url += "/composite-apps/" + params["mecApp"]
+	url += "/" + params["mecAppVersion"]
+	url += "/deployment-intent-groups/" + params["mecAppDig"]
+
+	return url
+}
+
+func getDigStatus(middleendURL string, statusType string) (string, error) {
+	resp, err := http.Get(middleendURL)
+	if err != nil {
+		postErr := fmt.Errorf("HTTP POST failed for URL %s.\nError: %s\n",
+			middleendURL, err)
+		fmt.Fprintf(os.Stderr, postErr.Error())
+		return "", postErr
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		getErr := fmt.Errorf("HTTP GET returned status code %s for URL %s.\n",
+			resp.Status, middleendURL)
+		fmt.Fprintf(os.Stderr, getErr.Error())
+		return "", getErr
+	}
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	status := digStatus{}
+	err = json.Unmarshal(b, &status)
+	if err != nil {
+		Err := fmt.Errorf("Failedto unmarashal.\nError: %s\n", err)
+		fmt.Fprintf(os.Stderr, Err.Error())
+	}
+
+	if statusType == "deployed" {
+		return status.DeployedStatus, nil
+	} else {
+		return status.ReadyStatus, nil
+	}
+}
+
 // DoDigApprove calls EMCO's /instantiate API
 func DoDigApprove(ctx context.Context, params NwfParam) (*NwfParam, error) {
+	var digURL = ""
+	var middleendURL = ""
 
 	// POST dig update operation
 	fmt.Printf("Approve XXXXXXXXX: migParam = %#v\n", params.InParams)
-	digURL := buildDig1URL(params.InParams)
+
+	if params.App == "MEC" {
+		digURL = buildMECDigURL(params.InParams)
+		middleendURL = buildMiddleendMECURL(params.InParams) + "/status"
+	} else {
+		digURL = buildDig1URL(params.InParams)
+		middleendURL = buildMiddleendURL(params.InParams) + "/status"
+	}
+
+	// Get the status of the DIG
+	params.mu.Lock()
+	status, err := getDigStatus(middleendURL, "deployed")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, err.Error())
+		params.mu.Unlock()
+		return nil, err
+	}
+	if status == "Approved" {
+		fmt.Printf("DIG in Approved state already: %s", middleendURL)
+		params.mu.Unlock()
+		return &params, nil
+	}
+
 	digInstantiateURL := digURL + "/approve"
 	resp, err := http.Post(digInstantiateURL, "", nil)
 	if err != nil {
 		postErr := fmt.Errorf("HTTP POST failed for URL %s.\nError: %s\n",
 			digInstantiateURL, err)
 		fmt.Fprintf(os.Stderr, postErr.Error())
+		params.mu.Unlock()
 		return nil, postErr
 	}
 	defer resp.Body.Close()
@@ -118,24 +197,51 @@ func DoDigApprove(ctx context.Context, params NwfParam) (*NwfParam, error) {
 		postErr := fmt.Errorf("HTTP POST returned status code %s for URL %s.\n",
 			resp.Status, digInstantiateURL)
 		fmt.Fprintf(os.Stderr, postErr.Error())
+		params.mu.Unlock()
 		return nil, postErr
 	}
 
+	params.mu.Unlock()
 	return &params, nil
 }
 
 // DoDigInstantiate calls EMCO's /instantiate API
 func DoDigInstantiate(ctx context.Context, params NwfParam) (*NwfParam, error) {
+	var digURL = ""
+	var middleendURL = ""
 
 	// POST dig update operation
 	fmt.Printf("XXXXXXXXX: migParam = %#v\n", params.InParams)
-	digURL := buildDig1URL(params.InParams)
+
+	if params.App == "MEC" {
+		digURL = buildMECDigURL(params.InParams)
+		middleendURL = buildMiddleendMECURL(params.InParams) + "/status"
+	} else {
+		digURL = buildDig1URL(params.InParams)
+		middleendURL = buildMiddleendURL(params.InParams) + "/status"
+	}
+
+	// Get the status of the DIG
+	params.mu.Lock()
+	status, err := getDigStatus(middleendURL, "deployed")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, err.Error())
+		params.mu.Unlock()
+		return nil, err
+	}
+	if status == "Instantiated" {
+		fmt.Printf("DIG in Instantiated state already: %s", middleendURL)
+		params.mu.Unlock()
+		return &params, nil
+	}
+
 	digInstantiateURL := digURL + "/instantiate"
 	resp, err := http.Post(digInstantiateURL, "", nil)
 	if err != nil {
 		postErr := fmt.Errorf("HTTP POST failed for URL %s.\nError: %s\n",
 			digInstantiateURL, err)
 		fmt.Fprintf(os.Stderr, postErr.Error())
+		params.mu.Unlock()
 		return nil, postErr
 	}
 	defer resp.Body.Close()
@@ -144,9 +250,11 @@ func DoDigInstantiate(ctx context.Context, params NwfParam) (*NwfParam, error) {
 		postErr := fmt.Errorf("HTTP POST returned status code %s for URL %s.\n",
 			resp.Status, digInstantiateURL)
 		fmt.Fprintf(os.Stderr, postErr.Error())
+		params.mu.Unlock()
 		return nil, postErr
 	}
 
+	params.mu.Unlock()
 	return &params, nil
 }
 
@@ -198,37 +306,17 @@ func DoSwitchConfig(ctx context.Context, params NwfParam) (*NwfParam, error) {
 func GetInstantiateStatus(ctx context.Context, params NwfParam) (*NwfParam, error) {
 	middleendURL := buildMiddleendURL(params.InParams) + "/status"
 	fmt.Printf("YYYYY : status = %#s\n", middleendURL)
-	resp, err := http.Get(middleendURL)
+	status, err := getDigStatus(middleendURL, "ready")
 	if err != nil {
-		postErr := fmt.Errorf("HTTP POST failed for URL %s.\nError: %s\n",
-			middleendURL, err)
-		fmt.Fprintf(os.Stderr, postErr.Error())
-		return nil, postErr
+		fmt.Fprintf(os.Stderr, err.Error())
+		return nil, err
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		getErr := fmt.Errorf("HTTP GET returned status code %s for URL %s.\n",
-			resp.Status, middleendURL)
-		fmt.Fprintf(os.Stderr, getErr.Error())
-		return nil, getErr
-	}
-
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	status := digStatus{}
-	err = json.Unmarshal(b, &status)
-	if err != nil {
-		Err := fmt.Errorf("Failedto unmarashal.\nError: %s\n", err)
-		fmt.Fprintf(os.Stderr, Err.Error())
-	}
-	fmt.Printf("YYYYYXXXXX %s\n",status.ReadyStatus)
-	if status.ReadyStatus != "Ready" {
-		err2 := fmt.Errorf("the DU is still not ready %g", status.ReadyStatus)
+	fmt.Printf("YYYYYXXXXX %s\n", status)
+	if status != "Ready" {
+		err2 := fmt.Errorf("the DU is still not ready %g", status)
 		fmt.Fprintf(os.Stderr, err2.Error())
-		return nil, err2 
+		return nil, err2
 	}
-
 	return &params, nil
 }
